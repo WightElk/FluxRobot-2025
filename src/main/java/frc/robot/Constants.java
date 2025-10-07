@@ -29,6 +29,17 @@ public final class Constants {
     public static final double OutputLimit = 0.3;
   }
 
+  public static final class PneumoConstants {
+    public static final int HubId = 3;
+    public static final int ForwardLeftSolenoidId = 6;
+    public static final int ReverseLeftSolenoidId = 7;
+    public static final int ForwardRightSolenoidId = 0;
+    public static final int ReverseRightSolenoidId = 1;
+
+    public static final double MinPressure = 20;
+    public static final double MaxPressure = 60;
+  }
+
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
   }
