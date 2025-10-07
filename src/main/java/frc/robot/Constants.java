@@ -29,6 +29,11 @@ public final class Constants {
     public static final double OutputLimit = 0.3;
   }
 
+  public static final class TrayConstants {
+    public static final int MotorId = 3;
+    public static final int FeedMotorId = 4;
+  }
+
   public static final class PneumoConstants {
     public static final int HubId = 3;
     public static final int ForwardLeftSolenoidId = 6;
