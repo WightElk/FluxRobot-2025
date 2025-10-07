@@ -32,6 +32,13 @@ public class Pneumatics extends SubsystemBase {
     rightSolenoid.set(DoubleSolenoid.Value.kOff);
   }
 
+  public void toggleCompressor() {
+    if (pneumo.getCompressorCurrent() > 0.0)
+      pneumo.disableCompressor();
+    else
+      pneumo.enableCompressorAnalog(PneumoConstants.MinPressure, PneumoConstants.MaxPressure);  
+  }
+
   public void enableCompressor() {
     pneumo.enableCompressorAnalog(PneumoConstants.MinPressure, PneumoConstants.MaxPressure);  
   }
