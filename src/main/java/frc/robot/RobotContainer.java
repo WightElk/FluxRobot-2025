@@ -50,10 +50,14 @@ public class RobotContainer {
   private final CommandXboxController m_driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
 
+  private final Telemetry logger = new Telemetry(MaxSpeed);
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
+
+    drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   /**
@@ -106,7 +110,7 @@ public class RobotContainer {
 
     // reset the field-centric heading on left bumper press
     m_driverController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-}
+  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
