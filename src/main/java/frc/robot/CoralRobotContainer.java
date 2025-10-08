@@ -6,8 +6,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.TraySubsystem;
+import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.commands.DriveToTag;
 import frc.robot.commands.TrayInOutCommand;
 
 /**
@@ -17,6 +20,7 @@ public class CoralRobotContainer extends RobotContainer {
   private final CANBus canBus = new CANBus(RobotConfig.CoralRobot.systemCANBus);
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final TraySubsystem tray = new TraySubsystem(canBus);
+  private final VisionSubsystem vision;
 
   // Set to 1 to use driver controller for everything, 2 to use operator controller for elevator and tray
   private boolean useTwoControllers = OperatorConstants.UseTwoControllers;
@@ -27,6 +31,9 @@ public class CoralRobotContainer extends RobotContainer {
     super(RobotConfig.CoralRobot.driveCANBus, RobotConfig.CoralRobot.pigeonId, RobotConfig.CoralRobot.pigeonConfigs,
       RobotConfig.CoralRobot.frontLeft, RobotConfig.CoralRobot.frontRight,
       RobotConfig.CoralRobot.backLeft, RobotConfig.CoralRobot.backRight);
+
+    // Single camera vision for AprilTag detection
+    vision = new VisionSubsystem(VisionConstants.CAMERA_NAME);
   }
 
   @Override
@@ -47,5 +54,17 @@ public class CoralRobotContainer extends RobotContainer {
 
     // Tray control bindings
     controller.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new TrayInOutCommand(tray, () -> driverController.getRightTriggerAxis()));
+
+    // Vision control bindings (driver controller only)
+    // Left bumper: Drive to AprilTag (vision-guided alignment)
+    driverController.leftBumper().whileTrue(new DriveToTag(vision, drivetrain));
+  }
+
+  /**
+   * Gets the vision subsystem (Coral robot only - single camera).
+   * @return The VisionSubsystem instance
+   */
+  public VisionSubsystem getVision() {
+    return vision;
   }
 }
