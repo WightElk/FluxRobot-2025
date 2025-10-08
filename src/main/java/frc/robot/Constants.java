@@ -13,13 +13,14 @@ package frc.robot;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+
   public static final class ElevatorConstants {
     public static final int LeaderId = 1;
     public static final int FollowerId = 2;
 
     public static final double BottomPos = -0.5;
-    public static final double Level1pos = -8.5;
-    public static final double Level2pos = -18.5;
+    public static final double Level1pos = -7;
+    public static final double Level2pos = -19.5;
 
     public static final double JogStep = 0.2;
 
