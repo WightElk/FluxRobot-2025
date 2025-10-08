@@ -1,5 +1,7 @@
 package frc.robot;
 
+import com.ctre.phoenix6.CANBus;
+
 import edu.wpi.first.wpilibj2.command.RunCommand;
 
 import frc.robot.Constants.OperatorConstants;
@@ -11,11 +13,14 @@ import frc.robot.commands.TrayInOutCommand;
  * Robot with Coral Elevator
  */
 public class CoralRobotContainer extends RobotContainer {
+  private final CANBus canBus = new CANBus(RobotConfig.CoralRobot.systemCANBus);
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
-  private final TraySubsystem tray = new TraySubsystem();
+  private final TraySubsystem tray = new TraySubsystem(canBus);
 
   public CoralRobotContainer() {
-    super();
+    super(RobotConfig.CoralRobot.driveCANBus, RobotConfig.CoralRobot.pigeonId, RobotConfig.CoralRobot.pigeonConfigs,
+      RobotConfig.CoralRobot.frontLeft, RobotConfig.CoralRobot.frontRight,
+      RobotConfig.CoralRobot.backLeft, RobotConfig.CoralRobot.backRight);
   }
 
   @Override

@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.generated.TunerConstants.ConstantCreator;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
@@ -12,7 +13,12 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ExampleSubsystem;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.Pigeon2Configuration;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -32,6 +38,8 @@ public class RobotContainer {
   private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
+  public final SwerveDrivetrainConstants DrivetrainConstants;
+
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
     .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
@@ -39,7 +47,7 @@ public class RobotContainer {
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
-  public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+  public final CommandSwerveDrivetrain drivetrain;
 
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
@@ -57,11 +65,19 @@ public class RobotContainer {
   protected final Telemetry logger = new Telemetry(MaxSpeed);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public RobotContainer() {
+  public RobotContainer(String canBusName, int pigeonId, Pigeon2Configuration pigeonConfigs,
+    SwerveModuleConfig frontLeft, SwerveModuleConfig frontRight, SwerveModuleConfig backLeft, SwerveModuleConfig backRight)
+  {
+    DrivetrainConstants = new SwerveDrivetrainConstants()
+      .withCANBusName(canBusName)
+      .withPigeon2Id(pigeonId)
+      .withPigeon2Configs(pigeonConfigs);
+
+    drivetrain = createDrivetrain(frontLeft, frontRight, backLeft, backRight);
+    drivetrain.registerTelemetry(logger::telemeterize);
+
     // Configure the trigger bindings
     configureBindings();
-
-    drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   /**
@@ -73,7 +89,8 @@ public class RobotContainer {
    * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
    * joysticks}.
    */
-  protected void configureBindings() {
+  protected void configureBindings()
+  {
     /*  Example: How to bind commands to triggers
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
     new Trigger(exampleSubsystem::exampleCondition)
@@ -135,5 +152,27 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     return Autos.exampleAuto(exampleSubsystem);
+  }
+
+  private SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> createModuleConstants(SwerveModuleConfig constants)
+  {
+    return ConstantCreator.createModuleConstants(
+      constants.steerMotorId, constants.driveMotorId, constants.encoderId,
+      constants.encoderOffset,
+      constants.xPos, constants.yPos,
+      TunerConstants.kInvertLeftSide,
+      constants.steerMotorInverted, constants.encoderInverted
+    );
+  }
+
+  // Creates a CommandSwerveDrivetrain instance.
+  // This should only be called once in your robot program,.
+  private CommandSwerveDrivetrain createDrivetrain(SwerveModuleConfig frontLeft, SwerveModuleConfig frontRight, SwerveModuleConfig backLeft, SwerveModuleConfig backRight)
+  {
+    return new CommandSwerveDrivetrain(
+        DrivetrainConstants,
+        createModuleConstants(frontLeft), createModuleConstants(frontRight),
+        createModuleConstants(backLeft), createModuleConstants(backRight)
+    );
   }
 }
