@@ -2,8 +2,9 @@ package frc.robot;
 
 import com.ctre.phoenix6.CANBus;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.TraySubsystem;
@@ -17,6 +18,11 @@ public class CoralRobotContainer extends RobotContainer {
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final TraySubsystem tray = new TraySubsystem(canBus);
 
+  // Set to 1 to use driver controller for everything, 2 to use operator controller for elevator and tray
+  private boolean useTwoControllers = OperatorConstants.UseTwoControllers;
+  private final CommandXboxController operatorController =
+    new CommandXboxController(OperatorConstants.OperatorControllerPort);
+
   public CoralRobotContainer() {
     super(RobotConfig.CoralRobot.driveCANBus, RobotConfig.CoralRobot.pigeonId, RobotConfig.CoralRobot.pigeonConfigs,
       RobotConfig.CoralRobot.frontLeft, RobotConfig.CoralRobot.frontRight,
@@ -27,17 +33,19 @@ public class CoralRobotContainer extends RobotContainer {
   protected void configureBindings() {
     super.configureBindings();
 
-    // Elevator control bindings
-    driverController.povDown().whileTrue(new RunCommand(() -> elevator.jogUp(), elevator));
-    driverController.povUp().whileTrue(new RunCommand(() -> elevator.jogDown(), elevator));
-    driverController.povLeft().or(driverController.povRight()).whileTrue(new RunCommand(() -> elevator.stop(), elevator));
+    useTwoControllers = SmartDashboard.getBoolean("Use 2 controllers", OperatorConstants.UseTwoControllers);
 
-    driverController.y().onTrue(new RunCommand(() -> elevator.moveToLevel2(), elevator));
-    driverController.b().onTrue(new RunCommand(() -> elevator.moveToLevel1(), elevator));
-    driverController.a().onTrue(new RunCommand(() -> elevator.moveToBottom(), elevator));
+    CommandXboxController controller = useTwoControllers ? operatorController : driverController;
+    // Elevator control bindings
+    controller.povDown().whileTrue(new RunCommand(() -> elevator.jogUp(), elevator));
+    controller.povUp().whileTrue(new RunCommand(() -> elevator.jogDown(), elevator));
+    controller.povLeft().or(controller.povRight()).whileTrue(new RunCommand(() -> elevator.stop(), elevator));
+
+    controller.y().onTrue(new RunCommand(() -> elevator.moveToLevel2(), elevator));
+    controller.b().onTrue(new RunCommand(() -> elevator.moveToLevel1(), elevator));
+    controller.a().onTrue(new RunCommand(() -> elevator.moveToBottom(), elevator));
 
     // Tray control bindings
-    driverController.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new TrayInOutCommand(tray, () -> driverController.getRightTriggerAxis()));
-    driverController.rightTrigger(OperatorConstants.TriggerThreshold).and(driverController.rightBumper()).whileTrue(new TrayInOutCommand(tray, () -> driverController.getRightTriggerAxis()));
+    controller.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new TrayInOutCommand(tray, () -> driverController.getRightTriggerAxis()));
   }
 }

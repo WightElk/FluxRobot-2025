@@ -52,7 +52,10 @@ public final class Constants {
   }
 
   public static class OperatorConstants {
-    public static final int kDriverControllerPort = 0;
+    public static final int DriverControllerPort = 0;
+    public static final int OperatorControllerPort = 1;
+
+    public static final boolean UseTwoControllers = false;
 
     public static final double TriggerThreshold = 0.1;
 
