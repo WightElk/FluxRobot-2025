@@ -47,6 +47,13 @@ public final class Constants {
 
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
+
     public static final double TriggerThreshold = 0.1;
+
+    public static final double LinCoef = 0.2;
+    public static final double Threshold = 0.0;
+    public static final double CuspX = 0.9;
+    public static final double SpeedLimitX = 0.4;
+    public static final double SpeedLimitRot = 0.4;
   }
 }

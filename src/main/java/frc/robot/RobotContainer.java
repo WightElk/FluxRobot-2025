@@ -48,6 +48,12 @@ public class RobotContainer {
   protected final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
 
+  private final Sensitivity sensitivityPos = 
+      new Sensitivity(OperatorConstants.Threshold, OperatorConstants.CuspX, OperatorConstants.LinCoef, OperatorConstants.SpeedLimitX);
+
+  private final Sensitivity sensitivityRot =
+      new Sensitivity(OperatorConstants.Threshold, OperatorConstants.CuspX, OperatorConstants.LinCoef, OperatorConstants.SpeedLimitRot);
+
   protected final Telemetry logger = new Telemetry(MaxSpeed);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
@@ -83,9 +89,18 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(
       // Drivetrain will execute this command periodically
       drivetrain.applyRequest(() ->
-        drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-          .withVelocityY(-driverController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-          .withRotationalRate(-driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+        drive.withVelocityX(
+            // Drive forward with negative Y (forward)
+            MaxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
+          )
+          .withVelocityY(
+            // Drive left with negative X (left)
+            MaxSpeed * sensitivityPos.transfer(-driverController.getLeftX())
+          )
+          .withRotationalRate(
+            // Drive counterclockwise with negative X (left)
+            -driverController.getRightX() * MaxAngularRate
+          )
       )
     );
 
