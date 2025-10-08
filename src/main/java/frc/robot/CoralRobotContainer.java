@@ -38,6 +38,6 @@ public class CoralRobotContainer extends RobotContainer {
 
     // Tray control bindings
     driverController.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new TrayInOutCommand(tray, () -> driverController.getRightTriggerAxis()));
-    driverController.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new TrayInOutCommand(tray, () -> driverController.getLeftTriggerAxis()));
+    driverController.rightTrigger(OperatorConstants.TriggerThreshold).and(driverController.rightBumper()).whileTrue(new TrayInOutCommand(tray, () -> driverController.getRightTriggerAxis()));
   }
 }

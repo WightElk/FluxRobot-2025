@@ -32,6 +32,11 @@ public final class Constants {
   public static final class TrayConstants {
     public static final int MotorId = 3;
     public static final int FeedMotorId = 4;
+    public static final int CanDiId = 7;
+  
+    public static final double Speed = 1.0;
+    public static final double InSpeed = 0.5;
+    public static final double OutSpeed = 1.0;
   }
 
   public static final class PneumoConstants {

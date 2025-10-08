@@ -19,11 +19,12 @@ public class TrayInOutCommand extends Command {
 
     @Override
     public void initialize() {
+        traySubsystem.reset();
     }
   
     @Override
     public void execute() {
-        traySubsystem.setSpeed(speed.getAsDouble());
+        traySubsystem.run();
     }
   
     @Override
@@ -33,6 +34,6 @@ public class TrayInOutCommand extends Command {
   
     @Override
     public boolean isFinished() {
-        return false;
+        return traySubsystem.isCoralIn() || traySubsystem.isCoralOut();
     }
 }
