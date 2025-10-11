@@ -30,8 +30,7 @@ public class CoralRobotContainer extends RobotContainer {
   public CoralRobotContainer() {
     super(RobotConfig.CoralRobot);
 
-    // Single camera vision for AprilTag detection
-    vision = new VisionSubsystem(VisionConstants.CAMERA_NAME);
+    configureBindings();
   }
 
   @Override
