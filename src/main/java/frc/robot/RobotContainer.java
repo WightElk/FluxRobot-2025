@@ -5,23 +5,32 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.generated.TunerConstants.ConstantCreator;
+//import static frc.robot.generated.TunerConstants.ConstantCreator;
 
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.Autos;
+import frc.robot.commands.DriveToTag;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ExampleSubsystem;
+import frc.robot.subsystems.VisionSubsystem;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
+import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -49,8 +58,13 @@ public class RobotContainer {
 
   public final CommandSwerveDrivetrain drivetrain;
 
+  private final VisionSubsystem vision;
+
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
+
+  // Set to 1 to use driver controller for everything, 2 to use operator controller for elevator and tray
+  protected boolean useTwoControllers = OperatorConstants.UseTwoControllers;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   protected final CommandXboxController driverController =
@@ -60,24 +74,29 @@ public class RobotContainer {
       new Sensitivity(OperatorConstants.Threshold, OperatorConstants.CuspX, OperatorConstants.LinCoef, OperatorConstants.SpeedLimitX);
 
   private final Sensitivity sensitivityRot =
-      new Sensitivity(OperatorConstants.Threshold, OperatorConstants.CuspX, OperatorConstants.LinCoef, OperatorConstants.SpeedLimitRot);
+      new Sensitivity(OperatorConstants.RotThreshold, OperatorConstants.RotCuspX, OperatorConstants.RotLinCoef, OperatorConstants.SpeedLimitRot);
 
   protected final Telemetry logger = new Telemetry(MaxSpeed);
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public RobotContainer(String canBusName, int pigeonId, Pigeon2Configuration pigeonConfigs,
-    SwerveModuleConfig frontLeft, SwerveModuleConfig frontRight, SwerveModuleConfig backLeft, SwerveModuleConfig backRight)
-  {
-    DrivetrainConstants = new SwerveDrivetrainConstants()
-      .withCANBusName(canBusName)
-      .withPigeon2Id(pigeonId)
-      .withPigeon2Configs(pigeonConfigs);
+// /  public final CANBus kCANBus;
 
-    drivetrain = createDrivetrain(frontLeft, frontRight, backLeft, backRight);
+  /** The container for the robot. Contains subsystems, OI devices, and commands. */
+  public RobotContainer(RobotConfig config)
+  {
+//    kCANBus = new CANBus(config.driveCANBus, "./logs/example.hoot");
+    DrivetrainConstants = new SwerveDrivetrainConstants()
+      .withCANBusName(config.driveCANBus)
+      .withPigeon2Id(config.pigeonId)
+      .withPigeon2Configs(config.pigeonConfigs);
+
+    drivetrain = createDrivetrain(config);
     drivetrain.registerTelemetry(logger::telemeterize);
 
-    // Configure the trigger bindings
-    configureBindings();
+    // Single camera vision for AprilTag detection
+    vision = new VisionSubsystem(VisionConstants.CAMERA_NAME);
+
+    // Configure trigger bindings
+    //configureBindings();
   }
 
   /**
@@ -104,22 +123,53 @@ public class RobotContainer {
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
     drivetrain.setDefaultCommand(
-      // Drivetrain will execute this command periodically
+     // Drivetrain will execute this command periodically
       drivetrain.applyRequest(() ->
+        // double velX = MaxSpeed * sensitivityPos.transfer(-driverController.getLeftY());
+        // double velY = MaxSpeed * sensitivityPos.transfer(-driverController.getLeftX());
+        // double velRot = MaxAngularRate * sensitivityPos.transfer(-driverController.getRightX());
+
         drive.withVelocityX(
             // Drive forward with negative Y (forward)
-            MaxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
+  //        Sensitivity.minLimit(
+//            - OperatorConstants.SpeedLimitX * driverController.getLeftY() * MaxSpeed
+           MaxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
+//           , OperatorConstants.MinLimit)
+           //            velX
           )
           .withVelocityY(
             // Drive left with negative X (left)
+    //        Sensitivity.minLimit(
+//            - OperatorConstants.SpeedLimitX * driverController.getLeftX() * MaxSpeed
             MaxSpeed * sensitivityPos.transfer(-driverController.getLeftX())
+      //      , OperatorConstants.MinLimit)
+//            velY
           )
           .withRotationalRate(
             // Drive counterclockwise with negative X (left)
-            -driverController.getRightX() * MaxAngularRate
+        //    Sensitivity.minLimit(
+            MaxAngularRate * sensitivityRot.transfer(-driverController.getRightX())
+          //  , OperatorConstants.MinLimit)
+//            velRot
           )
       )
     );
+
+  //   drivetrain.setDefaultCommand(
+  //     // Drivetrain will execute this command periodically
+  //     drivetrain.applyRequest(() ->
+  //         drive.withVelocityX(0.5) // Drive counterclockwise with negative X (left)
+  //     )
+  //  );
+  //  drivetrain.setDefaultCommand(
+  //     // Drivetrain will execute this command periodically
+  //     drivetrain.applyRequest(() ->
+  //         drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+  //             .withVelocityY(-driverController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+  //             .withRotationalRate(-driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+  //     )
+  //  );
+
 
     // Idle while the robot is disabled. This ensures the configured
     // neutral mode is applied to the drive motors while disabled.
@@ -133,15 +183,22 @@ public class RobotContainer {
       point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))
     ));
 
-    // Run SysId routines when holding back/start and X/Y.
-    // Note that each routine should be run exactly once in a single log.
+    // // Run SysId routines when holding back/start and X/Y.
+    // // Note that each routine should be run exactly once in a single log.
     driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
     driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
     driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
     driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-    // reset the field-centric heading on left bumper press
-    driverController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+    // // reset the field-centric heading on left bumper press
+    driverController.rightBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+  
+    // Vision control bindings (driver controller only)
+    // Left bumper: Drive to AprilTag (vision-guided alignment)
+    driverController.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new DriveToTag(vision, drivetrain));
+
+    // if (useTwoControllers)
+    //   driverController.leftBumper().whileTrue(new DriveToTag(vision, drivetrain));
   }
 
   /**
@@ -154,25 +211,35 @@ public class RobotContainer {
     return Autos.exampleAuto(exampleSubsystem);
   }
 
-  private SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> createModuleConstants(SwerveModuleConfig constants)
+
+  private static SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> createModuleConstants(SwerveModuleConfig constants)
   {
-    return ConstantCreator.createModuleConstants(
+    return TunerConstants.ConstantCreator.createModuleConstants(
       constants.steerMotorId, constants.driveMotorId, constants.encoderId,
       constants.encoderOffset,
       constants.xPos, constants.yPos,
-      TunerConstants.kInvertLeftSide,
-      constants.steerMotorInverted, constants.encoderInverted
+      constants.invertSide, constants.steerMotorInverted, constants.encoderInverted
     );
   }
 
   // Creates a CommandSwerveDrivetrain instance.
   // This should only be called once in your robot program,.
-  private CommandSwerveDrivetrain createDrivetrain(SwerveModuleConfig frontLeft, SwerveModuleConfig frontRight, SwerveModuleConfig backLeft, SwerveModuleConfig backRight)
+  private CommandSwerveDrivetrain createDrivetrain(RobotConfig config)
   {
     return new CommandSwerveDrivetrain(
-        DrivetrainConstants,
-        createModuleConstants(frontLeft), createModuleConstants(frontRight),
-        createModuleConstants(backLeft), createModuleConstants(backRight)
+        config, DrivetrainConstants,
+        createModuleConstants(config.frontLeft),
+        createModuleConstants(config.frontRight),
+        createModuleConstants(config.backLeft),
+        createModuleConstants(config.backRight)
     );
+  }
+
+  /**
+   * Gets the vision subsystem (Coral robot only - single camera).
+   * @return The VisionSubsystem instance
+   */
+  public VisionSubsystem getVision() {
+    return vision;
   }
 }

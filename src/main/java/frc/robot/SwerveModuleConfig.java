@@ -10,6 +10,7 @@ public class SwerveModuleConfig {
     public final int driveMotorId;
     public final int steerMotorId;
     public final int encoderId;
+    public final boolean invertSide;
     public final boolean steerMotorInverted;
     public final boolean encoderInverted;
     public final Angle encoderOffset;
@@ -19,11 +20,12 @@ public class SwerveModuleConfig {
 
     public SwerveModuleConfig(int driveMotorId, int steerMotorId, int encoderId,
             double encoderOffsetAngle, double xPos, double yPos,
-            boolean steerMotorInverted, boolean encoderInverted) {
+            boolean invertSide, boolean steerMotorInverted, boolean encoderInverted) {
         this.driveMotorId = driveMotorId;
         this.steerMotorId = steerMotorId;
         this.encoderId = encoderId;
         this.encoderOffset = Rotations.of(encoderOffsetAngle);
+        this.invertSide = invertSide;
         this.steerMotorInverted = steerMotorInverted;
         this.encoderInverted = encoderInverted;
         this.xPos = Inches.of(xPos);
