@@ -30,6 +30,7 @@ public class DriveToTag extends Command {
     // These values need to be calibrated for your specific camera and AprilTag size
     // Formula: area ≈ k / (distance_inches^2) where k is a calibration constant
     private static final double CALIBRATION_CONSTANT = 5000.0; // Adjust based on testing
+    private double distanceToTarget = 0;
 
     /**
      * Creates a new DriveToTag command.
@@ -41,7 +42,7 @@ public class DriveToTag extends Command {
         this.drivetrain = drivetrain;
 
         if (vision != null)
-        addRequirements(vision, drivetrain);
+            addRequirements(vision, drivetrain);
     }
 
     @Override
@@ -49,8 +50,8 @@ public class DriveToTag extends Command {
         cachedDriveCommand = null; // Reset cached command on initialization
 
         // Initialize SmartDashboard values if not already set
-        if (!SmartDashboard.containsKey("Vision/TargetDistance_Inches")) {
-            SmartDashboard.putNumber("Vision/TargetDistance_Inches", 30.0); // Default 30 inches
+        if (!SmartDashboard.containsKey("TargetDistance_Inches")) {
+            SmartDashboard.putNumber("TargetDistance_Inches", VisionConstants.TargetDistance); // Default 30 inches
         }
     }
 
@@ -60,7 +61,8 @@ public class DriveToTag extends Command {
      * @return Approximate target area percentage
      */
     private double inchesToArea(double distanceInches) {
-        if (distanceInches <= 0) return 100.0; // Safety check
+        if (distanceInches <= 0)
+            return 100.0; // Safety check
         return CALIBRATION_CONSTANT / (distanceInches * distanceInches);
     }
 
@@ -70,7 +72,8 @@ public class DriveToTag extends Command {
      * @return Approximate distance in inches
      */
     private double areaToInches(double area) {
-        if (area <= 0) return 1000.0; // Safety check
+        if (area <= 0)
+            return 1000.0; // Safety check
         return Math.sqrt(CALIBRATION_CONSTANT / area);
     }
 
@@ -94,15 +97,16 @@ public class DriveToTag extends Command {
         double currentArea = vision.getTargetArea();
 
         // Get tunable target distance from SmartDashboard (in inches)
-        double targetDistanceInches = SmartDashboard.getNumber("Vision/TargetDistance_Inches", 30.0);
+        double targetDistanceInches = SmartDashboard.getNumber("TargetDistance_Inches", VisionConstants.TargetDistance);
         double targetArea = inchesToArea(targetDistanceInches);
 
         // Calculate current estimated distance
         double currentDistanceInches = areaToInches(currentArea);
+        distanceToTarget = currentDistanceInches;
 
         // Publish current distance info to dashboard
-        SmartDashboard.putNumber("Vision/CurrentDistance_Inches", currentDistanceInches);
-        SmartDashboard.putNumber("Vision/DistanceError_Inches", currentDistanceInches - targetDistanceInches);
+        SmartDashboard.putNumber("CurrentDistance_Inches", currentDistanceInches);
+        SmartDashboard.putNumber("DistanceError_Inches", currentDistanceInches - targetDistanceInches);
 
         double areaError = targetArea - currentArea;
 
@@ -141,6 +145,10 @@ public class DriveToTag extends Command {
             );
         }
 
+//        SmartDashboard.putNumber("distanceToTarget", distanceToTarget);
+        SmartDashboard.putNumber("driveSpeed", driveSpeed);
+        SmartDashboard.putNumber("rotationSpeed", rotationSpeed);
+
         // Update the request with new values and execute
         drivetrain.setControl(driveRequest
             .withVelocityX(driveSpeed)
@@ -168,7 +176,7 @@ public class DriveToTag extends Command {
         if (!vision.hasTargets())
             return false; // Keep running until we see and reach target, or get interrupted
 
-        double targetDistanceInches = SmartDashboard.getNumber("Vision/TargetDistance_Inches", 30.0);
+        double targetDistanceInches = SmartDashboard.getNumber("TargetDistance_Inches", VisionConstants.TargetDistance);
         double targetArea = inchesToArea(targetDistanceInches);
         double yawError = Math.abs(vision.getTargetYaw());
         double areaError = Math.abs(targetArea - vision.getTargetArea());
