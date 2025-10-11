@@ -15,6 +15,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 
+import frc.robot.Constants.LightConstants;
+
 public class Lights extends SubsystemBase {
     /* color can be constructed from RGBW, a WPILib Color/Color8Bit, HSV, or hex */
     private static final RGBWColor kGreen = new RGBWColor(0, 217, 0, 0);
@@ -33,7 +35,7 @@ public class Lights extends SubsystemBase {
     private static final int kSlot1StartIdx = 38;
     private static final int kSlot1EndIdx = 67;
 
-    private final CANdle m_candle = new CANdle(1, "rio");
+    private final CANdle m_candle;
 
     private enum AnimationType {
         None,
@@ -54,16 +56,18 @@ public class Lights extends SubsystemBase {
     private final SendableChooser<AnimationType> m_anim0Chooser = new SendableChooser<AnimationType>();
     private final SendableChooser<AnimationType> m_anim1Chooser = new SendableChooser<AnimationType>();
 
-    public Lights() {
-        // Configure CANdle
-        CANdleConfiguration config = new CANdleConfiguration();
-        // set the LED strip type and brightness
-        config.LED.StripType = StripTypeValue.GRB;
-        config.LED.BrightnessScalar = 0.5;
-        // disable status LED when being controlled
-        config.CANdleFeatures.StatusLedWhenActive = StatusLedWhenActiveValue.Disabled;
+    public Lights(String canBusName) {
+        m_candle = new CANdle(LightConstants.CanId, canBusName);
 
-        m_candle.getConfigurator().apply(config);
+        // Configure CANdle
+        CANdleConfiguration cfg = new CANdleConfiguration();
+        // set the LED strip type and brightness
+        cfg.LED.StripType = StripTypeValue.GRB;
+        cfg.LED.BrightnessScalar = 0.5;
+        // disable status LED when being controlled
+        cfg.CANdleFeatures.StatusLedWhenActive = StatusLedWhenActiveValue.Disabled;
+
+        m_candle.getConfigurator().apply(cfg);
 
         /* clear all previous animations */
         for (int i = 0; i < 8; ++i) {
