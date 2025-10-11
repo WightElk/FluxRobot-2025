@@ -51,6 +51,13 @@ public final class Constants {
     public static final double MaxPressure = 60;
   }
 
+  public static final class IntakeConstants {
+    public static final int LeaderId = 14;
+    public static final int FollowerId = 13;
+    public static final double InSpeed = 0.7;
+    public static final double OutSpeed = 1.0;
+  }
+
   public static class OperatorConstants {
     public static final int DriverControllerPort = 0;
     public static final int OperatorControllerPort = 1;
@@ -102,5 +109,9 @@ public final class Constants {
 
     /** Maximum yaw error before stopping forward drive (degrees) */
     public static final double MAX_YAW_ERROR_FOR_DRIVE = 15.0;
+  }
+
+  public static class LightConstants {
+    public static final int CanId = 6;
   }
 }
