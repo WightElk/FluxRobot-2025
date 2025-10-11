@@ -39,6 +39,8 @@ public class DriveToTag extends Command {
     public DriveToTag(VisionSubsystem vision, CommandSwerveDrivetrain drivetrain) {
         this.vision = vision;
         this.drivetrain = drivetrain;
+
+        if (vision != null)
         addRequirements(vision, drivetrain);
     }
 
@@ -74,6 +76,9 @@ public class DriveToTag extends Command {
 
     @Override
     public void execute() {
+        if (vision == null)
+            return;
+
         if (!vision.hasTargets()) {
             // No target visible - stop moving
             drivetrain.setControl(driveRequest
@@ -157,10 +162,11 @@ public class DriveToTag extends Command {
 
     @Override
     public boolean isFinished() {
+        if (vision == null)
+            return true;
         // Finish when both aligned and at target distance
-        if (!vision.hasTargets()) {
+        if (!vision.hasTargets())
             return false; // Keep running until we see and reach target, or get interrupted
-        }
 
         double targetDistanceInches = SmartDashboard.getNumber("Vision/TargetDistance_Inches", 30.0);
         double targetArea = inchesToArea(targetDistanceInches);
