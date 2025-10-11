@@ -18,9 +18,9 @@ public final class Constants {
     public static final int LeaderId = 1;
     public static final int FollowerId = 2;
 
-    public static final double BottomPos = -0.5;
+    public static final double BottomPos = 0.05;
     public static final double Level1pos = -7;
-    public static final double Level2pos = -19.5;
+    public static final double Level2pos = -19.6;
 
     public static final double JogStep = 0.2;
 
@@ -35,9 +35,10 @@ public final class Constants {
     public static final int FeedMotorId = 4;
     public static final int CanDiId = 7;
   
-    public static final double Speed = 1.0;
     public static final double InSpeed = 0.5;
     public static final double OutSpeed = 1.0;
+    public static final double Speed = 0.8;
+    public static final double BackwardSpeed = 0.5;
   }
 
   public static final class PneumoConstants {
@@ -59,18 +60,25 @@ public final class Constants {
   }
 
   public static class OperatorConstants {
-    public static final int DriverControllerPort = 0;
-    public static final int OperatorControllerPort = 1;
+    public static final int DriverControllerPort = 1;
+    public static final int OperatorControllerPort = 0;
 
-    public static final boolean UseTwoControllers = false;
+    public static final boolean UseTwoControllers = true;
 
-    public static final double TriggerThreshold = 0.1;
+    public static final double TriggerThreshold = 0.2;
 
-    public static final double LinCoef = 0.2;
+    public static final double LinCoef = 0.15;
     public static final double Threshold = 0.0;
     public static final double CuspX = 0.9;
-    public static final double SpeedLimitX = 0.4;
-    public static final double SpeedLimitRot = 0.4;
+    //TODO: Tune before competition!
+    public static final double SpeedLimitX = 0.5;
+    public static final double MinLimit = 0.4;
+
+    public static final double RotLinCoef = 0.2;
+    public static final double RotThreshold = 0.0;
+    public static final double RotCuspX = 0.5;
+    //TODO: Tune before competition!
+    public static final double SpeedLimitRot = 0.8;
   }
 
   /**
@@ -78,13 +86,16 @@ public final class Constants {
    */
   public static final class VisionConstants {
     /** PhotonVision camera name (must match name in PhotonVision UI) */
-    public static final String CAMERA_NAME = "photonvision";
+    public static final String CAMERA_NAME = "Logitech_Webcam_C930e";
+
+    // Distance to AprilTag in inches
+    public static final double TargetDistance = 27;
 
     /** P-controller gain for rotation alignment */
-    public static final double ROTATION_P = 0.05;
+    public static final double ROTATION_P = 0.07;
 
     /** P-controller gain for forward drive control */
-    public static final double DRIVE_P = 0.1;
+    public static final double DRIVE_P = 0.15;//0.1
 
     /** Angle tolerance for alignment completion (degrees) */
     public static final double ANGLE_TOLERANCE = 2.0;
