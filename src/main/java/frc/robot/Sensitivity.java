@@ -49,7 +49,16 @@ class Sensitivity {
         }
         if (xabs > limit)
             xabs = limit;
+        // if (xabs < minLimit)
+        //     xabs = limit;
+// /        System.out.println("SENS in: " + x + " out: " + xabs);
         return x >= 0 ? xabs : -xabs;
+    }
+
+    public static double minLimit(double value, double minValue) {
+      double abs = Math.abs(value);
+      double sign = value > 0 ? 1 : -1;
+      return abs > 0 && abs < minValue ? sign * minValue : value;
     }
 }
 
