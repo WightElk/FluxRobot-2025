@@ -55,11 +55,11 @@ public class VisionSubsystem extends SubsystemBase {
         }
 
         // Publish telemetry
-        SmartDashboard.putBoolean("Vision/Connected", cameraConnected);
-        SmartDashboard.putBoolean("Vision/HasTargets", hasTargets());
-        SmartDashboard.putNumber("Vision/TargetID", getTargetID());
-        SmartDashboard.putNumber("Vision/TargetYaw", getTargetYaw());
-        SmartDashboard.putNumber("Vision/TargetArea", getTargetArea());
+        SmartDashboard.putBoolean("Connected", cameraConnected);
+        SmartDashboard.putBoolean("HasTargets", hasTargets());
+        SmartDashboard.putNumber("TargetID", getTargetID());
+        SmartDashboard.putNumber("TargetYaw", getTargetYaw());
+        SmartDashboard.putNumber("TargetArea", getTargetArea());
     }
 
     /**
