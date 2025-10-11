@@ -78,12 +78,10 @@ public class TraySubsystem extends SubsystemBase {
   }
 
   public boolean isCoralIn() {
-    //boolean return !candprevActivated1 = false;i.getS2Closed().getValue();
     return inside;
   }
 
   public boolean isCoralOut() {
-    //boolean return !candprevActivated1 = false;i.getS2Closed().getValue();
     return outside;
   }
 
@@ -114,14 +112,5 @@ public class TraySubsystem extends SubsystemBase {
     prevActivated2 = activated2;
 
     SmartDashboard.putNumber("Coral Motor Applied Output", motor.getAppliedOutput());
-  }
-
-  @Override
-  public void periodic() {
-    // Optional: allow manual override from dashboard
-    double manualSpeed = SmartDashboard.getNumber("Coral Motor Speed", 0.0);
-    if (manualSpeed != 0.0) {
-      motor.set(manualSpeed);
-    }
   }
 }
