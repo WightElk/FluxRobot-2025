@@ -27,6 +27,8 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.RobotConfig;
+import frc.robot.SwerveModuleConfig;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
@@ -130,9 +132,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param modules               Constants for each specific module
      */
     public CommandSwerveDrivetrain(
+        RobotConfig config,
         SwerveDrivetrainConstants drivetrainConstants,
-        SwerveModuleConstants<?, ?, ?>... modules
-    ) {
+        SwerveModuleConstants<?, ?, ?>... modules)
+    {
         super(drivetrainConstants, modules);
         initOdometry();
         if (Utils.isSimulation()) {

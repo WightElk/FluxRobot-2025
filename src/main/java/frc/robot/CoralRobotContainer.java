@@ -28,9 +28,7 @@ public class CoralRobotContainer extends RobotContainer {
     new CommandXboxController(OperatorConstants.OperatorControllerPort);
 
   public CoralRobotContainer() {
-    super(RobotConfig.CoralRobot.driveCANBus, RobotConfig.CoralRobot.pigeonId, RobotConfig.CoralRobot.pigeonConfigs,
-      RobotConfig.CoralRobot.frontLeft, RobotConfig.CoralRobot.frontRight,
-      RobotConfig.CoralRobot.backLeft, RobotConfig.CoralRobot.backRight);
+    super(RobotConfig.CoralRobot);
 
     // Single camera vision for AprilTag detection
     vision = new VisionSubsystem(VisionConstants.CAMERA_NAME);

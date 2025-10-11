@@ -11,9 +11,9 @@ public class AlgaeRobotContainer extends RobotContainer {
     private final Pneumatics pneumatics = new Pneumatics();
 
   AlgaeRobotContainer() {
-    super(RobotConfig.CoralRobot.driveCANBus, RobotConfig.CoralRobot.pigeonId, RobotConfig.CoralRobot.pigeonConfigs,
-      RobotConfig.AlgaeRobot.frontLeft, RobotConfig.AlgaeRobot.frontRight,
-      RobotConfig.AlgaeRobot.backLeft, RobotConfig.AlgaeRobot.backRight);
+    super(RobotConfig.AlgaeRobot);
+    
+    configureBindings();
   }
 
   @Override
