@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -44,7 +45,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     protected Pigeon2 gyro;
     protected SwerveDriveKinematics kinematics;
     protected SwerveDriveOdometry odometry;
-    protected Pose2d initPose;
+    protected Pose2d initPose = new Pose2d();
     protected Pose2d currentPose;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
@@ -137,7 +138,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules)
     {
         super(drivetrainConstants, modules);
-        initOdometry();
+
+        gyro = new Pigeon2(config.pigeonId, config.driveCANBus);
+        initOdometry(
+            new Translation2d(config.frontLeft.xPos, config.frontLeft.yPos),
+            new Translation2d(config.frontRight.xPos, config.frontRight.yPos),
+            new Translation2d(config.backLeft.xPos, config.backLeft.yPos),
+            new Translation2d(config.backRight.xPos, config.backRight.yPos)
+        );
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -157,12 +166,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param modules                 Constants for each specific module
      */
     public CommandSwerveDrivetrain(
+        RobotConfig config,
         SwerveDrivetrainConstants drivetrainConstants,
         double odometryUpdateFrequency,
-        SwerveModuleConstants<?, ?, ?>... modules
-    ) {
+        SwerveModuleConstants<?, ?, ?>... modules)
+    {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
-        initOdometry();
+
+        gyro = new Pigeon2(config.pigeonId, config.driveCANBus);
+        initOdometry(
+            new Translation2d(config.frontLeft.xPos, config.frontLeft.yPos),
+            new Translation2d(config.frontRight.xPos, config.frontRight.yPos),
+            new Translation2d(config.backLeft.xPos, config.backLeft.yPos),
+            new Translation2d(config.backRight.xPos, config.backRight.yPos)
+        );
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -188,14 +206,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param modules                   Constants for each specific module
      */
     public CommandSwerveDrivetrain(
+        RobotConfig config,
         SwerveDrivetrainConstants drivetrainConstants,
         double odometryUpdateFrequency,
         Matrix<N3, N1> odometryStandardDeviation,
         Matrix<N3, N1> visionStandardDeviation,
-        SwerveModuleConstants<?, ?, ?>... modules
-    ) {
+        SwerveModuleConstants<?, ?, ?>... modules)
+    {
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation, modules);
-        initOdometry();
+
+        gyro = new Pigeon2(config.pigeonId, config.driveCANBus);
+        initOdometry(
+            new Translation2d(config.frontLeft.xPos, config.frontLeft.yPos),
+            new Translation2d(config.frontRight.xPos, config.frontRight.yPos),
+            new Translation2d(config.backLeft.xPos, config.backLeft.yPos),
+            new Translation2d(config.backRight.xPos, config.backRight.yPos)
+        );
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -257,6 +284,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Rotation2d rotation = gyro.getRotation2d();
         // Update the pose
         currentPose = odometry.update(rotation, getState().ModulePositions);
+
+        SmartDashboard.putNumber("Position_X", currentPose.getX());
+        SmartDashboard.putNumber("Position_Y", currentPose.getY());
+        SmartDashboard.putNumber("Rotation_Grad", currentPose.getRotation().getDegrees());
     }
 
     private void startSimThread() {
@@ -308,14 +339,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
     }
 
-    private void initOdometry() {
-        gyro = new Pigeon2(1, "rio");
-
-        kinematics = new SwerveDriveKinematics(
-            new Translation2d(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-            new Translation2d(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY),
-            new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-            new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY));
+    protected void initOdometry(Translation2d frontLeft, Translation2d frontRight, Translation2d backLeft, Translation2d backRight) {
+        kinematics = new SwerveDriveKinematics(frontLeft, frontRight, backLeft, backRight);
 
         SwerveDriveState driveState = getState();
 
