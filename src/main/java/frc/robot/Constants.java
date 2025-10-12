@@ -14,6 +14,11 @@ package frc.robot;
  */
 public final class Constants {
 
+  public static final class DriveConstants {
+    public static final double AutoModeSpeed = 0.3;
+    public static final double AutoModeDriveTime = 0.6;  // In seconds
+  }
+
   public static final class ElevatorConstants {
     public static final int LeaderId = 1;
     public static final int FollowerId = 2;
