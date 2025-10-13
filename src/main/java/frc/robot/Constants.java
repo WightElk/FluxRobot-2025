@@ -51,7 +51,7 @@ public final class Constants {
     public static final int ForwardLeftSolenoidId = 6;
     public static final int ReverseLeftSolenoidId = 7;
     public static final int ForwardRightSolenoidId = 0;
-    public static final int ReverseRightSolenoidId = 1;
+    public static final int ReverseRightSolenoidId = 3;
 
     public static final double MinPressure = 20;
     public static final double MaxPressure = 60;
@@ -60,8 +60,10 @@ public final class Constants {
   public static final class IntakeConstants {
     public static final int LeaderId = 14;
     public static final int FollowerId = 13;
-    public static final double InSpeed = 0.7;
-    public static final double OutSpeed = 1.0;
+    public static final double InSpeed = 1.0;//ROLLER_ALGAE_IN
+    public static final double OutSpeed = -0.8;//ROLLER_ALGAE_OUT
+    public static final int ROLLER_MOTOR_CURRENT_LIMIT = 60;
+    public static final double ROLLER_MOTOR_VOLTAGE_COMP = 10;
   }
 
   public static class OperatorConstants {
