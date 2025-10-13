@@ -33,7 +33,7 @@ public class CoralRobotContainer extends RobotContainer {
   public final DriveForwardAuto autoDriveForward = new DriveForwardAuto(drivetrain);
 
   public CoralRobotContainer() {
-    super(RobotConfig.CoralRobot);
+    super(RobotConfig.CoralRobot, true);
 
     configureBindings();
   }

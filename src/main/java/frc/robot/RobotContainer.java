@@ -81,7 +81,7 @@ public class RobotContainer {
 // /  public final CANBus kCANBus;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public RobotContainer(RobotConfig config)
+  public RobotContainer(RobotConfig config, boolean useVision)
   {
 //    kCANBus = new CANBus(config.driveCANBus, "./logs/example.hoot");
     DrivetrainConstants = new SwerveDrivetrainConstants()
@@ -93,7 +93,7 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
 
     // Single camera vision for AprilTag detection
-    vision = new VisionSubsystem(VisionConstants.CAMERA_NAME);
+    vision = useVision ? new VisionSubsystem(VisionConstants.CAMERA_NAME) : null;
 
     // Configure trigger bindings
     //configureBindings();

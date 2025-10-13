@@ -11,7 +11,7 @@ public class AlgaeRobotContainer extends RobotContainer {
     private final Pneumatics pneumatics = new Pneumatics();
 
   AlgaeRobotContainer() {
-    super(RobotConfig.AlgaeRobot);
+    super(RobotConfig.AlgaeRobot, false);
     
     configureBindings();
   }
