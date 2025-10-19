@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putString("Robot", comments);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    m_robotContainer = comments == "AlgaeRobot" ? new AlgaeRobotContainer() : new CoralRobotContainer();
+    m_robotContainer = comments.contains("AlgaeRobot") ? new AlgaeRobotContainer() : new CoralRobotContainer();
   }
 
   /**
