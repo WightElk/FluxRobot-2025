@@ -54,10 +54,10 @@ public class AlgaeRobotContainer extends RobotContainer {
       controller.start().onTrue(new InstantCommand(() -> pneumatics.enableCompressor()));
       controller.back().onTrue(new InstantCommand(() -> pneumatics.disableCompressor()));
   
-      controller.leftBumper().whileTrue(new AlgieOutCommand(roller));
+      controller.rightBumper().whileTrue(new AlgieOutCommand(roller));
       
       // Here we use a trigger as a button when it is pushed past a certain threshold
-      controller.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlgieInCommand(roller));
+      controller.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlgieInCommand(roller));
     }
   }
 }
