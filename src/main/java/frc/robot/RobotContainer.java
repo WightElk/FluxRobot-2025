@@ -171,15 +171,21 @@ public class RobotContainer {
         if (changed)
           sensitivityPos.set(xStartPos, xMiddlePos, yStartPos, yMiddlePos, yMaxPos);
 
+        SmartDashboard.putNumber("Joystick_X", driverController.getLeftY());
+        SmartDashboard.putNumber("Joystick_Y", driverController.getLeftX());
+
+        SmartDashboard.putNumber("Joystick_OutX", -sensitivityPos.transfer(driverController.getLeftY()));
+        SmartDashboard.putNumber("Joystick_OutY", -sensitivityPos.transfer(driverController.getLeftX()));
+
         return drive.withVelocityX(
             // Drive forward with negative Y (forward)
-           //MaxSpeed * sensitivityPos.transfer(driverController.getLeftY())
-           -MaxSpeed * driverController.getLeftY()
+           -MaxSpeed * sensitivityPos.transfer(driverController.getLeftY())
+           //-MaxSpeed * driverController.getLeftY()
           )
           .withVelocityY(
             // Drive left with negative X (left)
-            //MaxSpeed * sensitivityPos.transfer(driverController.getLeftX())
-            -MaxSpeed * driverController.getLeftX()
+            -MaxSpeed * sensitivityPos.transfer(driverController.getLeftX())
+            //-MaxSpeed * driverController.getLeftX()
           )
           .withRotationalRate(
             MaxAngularRate * sensitivityRot.transfer(-driverController.getRightX())

@@ -22,14 +22,18 @@ class PiecewiseSensitivity {
         this.yStart = yStart;
         this.yMiddle = yMiddle;
         this.yMax = yMax;
-        slope1 = xMiddle < xStart ? (yMiddle - yStart) / (xMiddle - xStart) : 0.0;
+        slope1 = xStart < xMiddle ? (yMiddle - yStart) / (xMiddle - xStart) : 0.0;
         slope2 = xMiddle < 1.0 ? (yMax - yMiddle) / (1.0 - xMiddle) : 0.0;
     }
 
+    // Limit sStart to 0.01
     double transfer(double x) {
         double xabs = Math.abs(x);
+        // if (xabs == 0.0)
+        //     return 0.0;
+        //xMiddle > 0.0 && 
         if (xabs < xStart) {
-            return 0;
+            return 0.0;
         }
         else if (xabs < xMiddle) {
             xabs = yStart + slope1 * (xabs - xStart);
@@ -40,6 +44,6 @@ class PiecewiseSensitivity {
         else {
             xabs = yMax;
         }
-        return x >= 0 ? xabs : -xabs;
+        return x >= 0.0 ? xabs : -xabs;
     }
 }
