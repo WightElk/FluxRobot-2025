@@ -70,10 +70,16 @@ public class RobotContainer {
   protected final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.DriverControllerPort);
 
-  private final Sensitivity sensitivityPos = 
+  private final PiecewiseSensitivity sensitivityPos = 
+      new PiecewiseSensitivity(OperatorConstants.xStartPos, OperatorConstants.xMiddlePos, OperatorConstants.yStartPos, OperatorConstants.yMiddlePos, OperatorConstants.yMaxPos);
+
+  private final PiecewiseSensitivity sensitivityRot =
+    new PiecewiseSensitivity(OperatorConstants.xStartPos, OperatorConstants.xMiddlePos, OperatorConstants.yStartPos, OperatorConstants.yMiddlePos, OperatorConstants.yMaxPos);
+
+  private final Sensitivity sensitivityPos2 = 
       new Sensitivity(OperatorConstants.Threshold, OperatorConstants.CuspX, OperatorConstants.LinCoef, OperatorConstants.SpeedLimitX);
 
-  private final Sensitivity sensitivityRot =
+  private final Sensitivity sensitivityRot2 =
       new Sensitivity(OperatorConstants.RotThreshold, OperatorConstants.RotCuspX, OperatorConstants.RotLinCoef, OperatorConstants.SpeedLimitRot);
 
   protected final Telemetry logger = new Telemetry(MaxSpeed);
@@ -131,26 +137,14 @@ public class RobotContainer {
 
         drive.withVelocityX(
             // Drive forward with negative Y (forward)
-  //        Sensitivity.minLimit(
-//            - OperatorConstants.SpeedLimitX * driverController.getLeftY() * MaxSpeed
            MaxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
-//           , OperatorConstants.MinLimit)
-           //            velX
           )
           .withVelocityY(
             // Drive left with negative X (left)
-    //        Sensitivity.minLimit(
-//            - OperatorConstants.SpeedLimitX * driverController.getLeftX() * MaxSpeed
             MaxSpeed * sensitivityPos.transfer(-driverController.getLeftX())
-      //      , OperatorConstants.MinLimit)
-//            velY
           )
           .withRotationalRate(
-            // Drive counterclockwise with negative X (left)
-        //    Sensitivity.minLimit(
             MaxAngularRate * sensitivityRot.transfer(-driverController.getRightX())
-          //  , OperatorConstants.MinLimit)
-//            velRot
           )
       )
     );
