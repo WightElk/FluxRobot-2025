@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -70,11 +71,17 @@ public class RobotContainer {
   protected final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.DriverControllerPort);
 
+  double xStartPos = OperatorConstants.xStartPos;
+  double xMiddlePos = OperatorConstants.xMiddlePos;
+  double yStartPos = OperatorConstants.yStartPos;
+  double yMiddlePos = OperatorConstants.yMiddlePos;
+  double yMaxPos = OperatorConstants.yMaxPos;
+
   private final PiecewiseSensitivity sensitivityPos = 
       new PiecewiseSensitivity(OperatorConstants.xStartPos, OperatorConstants.xMiddlePos, OperatorConstants.yStartPos, OperatorConstants.yMiddlePos, OperatorConstants.yMaxPos);
 
   private final PiecewiseSensitivity sensitivityRot =
-    new PiecewiseSensitivity(OperatorConstants.xStartPos, OperatorConstants.xMiddlePos, OperatorConstants.yStartPos, OperatorConstants.yMiddlePos, OperatorConstants.yMaxPos);
+    new PiecewiseSensitivity(OperatorConstants.xStartRot, OperatorConstants.xMiddleRot, OperatorConstants.yStartRot, OperatorConstants.yMiddleRot, OperatorConstants.yMaxRot);
 
   private final Sensitivity sensitivityPos2 = 
       new Sensitivity(OperatorConstants.Threshold, OperatorConstants.CuspX, OperatorConstants.LinCoef, OperatorConstants.SpeedLimitX);
@@ -100,6 +107,12 @@ public class RobotContainer {
 
     // Single camera vision for AprilTag detection
     vision = useVision ? new VisionSubsystem(VisionConstants.CAMERA_NAME) : null;
+
+    SmartDashboard.putNumber("Start_X", xStartPos);
+    SmartDashboard.putNumber("Middle_X", xMiddlePos);
+    SmartDashboard.putNumber("Start_Y", yStartPos);
+    SmartDashboard.putNumber("Middle_Y", yMiddlePos);
+    SmartDashboard.putNumber("Max_Y", yMaxPos);
 
     // Configure trigger bindings
     //configureBindings();
@@ -130,22 +143,48 @@ public class RobotContainer {
     // and Y is defined as to the left according to WPILib convention.
     drivetrain.setDefaultCommand(
      // Drivetrain will execute this command periodically
-      drivetrain.applyRequest(() ->
+      drivetrain.applyRequest(() -> {
         // double velX = MaxSpeed * sensitivityPos.transfer(-driverController.getLeftY());
         // double velY = MaxSpeed * sensitivityPos.transfer(-driverController.getLeftX());
         // double velRot = MaxAngularRate * sensitivityPos.transfer(-driverController.getRightX());
+        double xStart = SmartDashboard.getNumber("Start_X", OperatorConstants.xStartPos);
+        double xMiddle = SmartDashboard.getNumber("Middle_X", OperatorConstants.xMiddlePos);
+        double yStart = SmartDashboard.getNumber("Start_Y", OperatorConstants.yStartPos);
+        double yMiddle = SmartDashboard.getNumber("Middle_Y", OperatorConstants.yMiddlePos);
+        double yMax = SmartDashboard.getNumber("Max_Y", OperatorConstants.yMaxPos);
 
-        drive.withVelocityX(
+        boolean changed = xStartPos != xStart;
+        if (changed)
+          xStartPos = xStart;
+        changed = changed || xMiddlePos != xMiddle;
+        if (xMiddlePos != xMiddle)
+          xMiddlePos = xMiddle;
+        changed = changed || yStartPos != yStart;
+        if (yStartPos != yStart)
+          yStartPos = yStart;
+        changed = changed || yMiddlePos != yMiddle;
+        if (yMiddlePos != yMiddle)
+          yMiddlePos = yMiddle;
+        changed = changed || yMaxPos != yMax;
+        if (yMaxPos != yMax)
+          yMaxPos = yMax;
+        if (changed)
+          sensitivityPos.set(xStartPos, xMiddlePos, yStartPos, yMiddlePos, yMaxPos);
+
+        return drive.withVelocityX(
             // Drive forward with negative Y (forward)
-           MaxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
+           //MaxSpeed * sensitivityPos.transfer(driverController.getLeftY())
+           -MaxSpeed * driverController.getLeftY()
           )
           .withVelocityY(
             // Drive left with negative X (left)
-            MaxSpeed * sensitivityPos.transfer(-driverController.getLeftX())
+            //MaxSpeed * sensitivityPos.transfer(driverController.getLeftX())
+            -MaxSpeed * driverController.getLeftX()
           )
           .withRotationalRate(
             MaxAngularRate * sensitivityRot.transfer(-driverController.getRightX())
-          )
+          );
+        }
       )
     );
 
