@@ -4,6 +4,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
+
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -139,6 +143,27 @@ public final class Constants {
 
     /** Maximum yaw error before stopping forward drive (degrees) */
     public static final double MAX_YAW_ERROR_FOR_DRIVE = 15.0;
+
+    public static final Pose3d cameraPoseFront = new Pose3d (
+      new Translation3d(0.0, 0.0, 0.0), 
+      new Rotation3d(0.0, 0.0, 0.0)
+    );
+
+    public static final Pose3d cameraPoseRear = new Pose3d (
+      new Translation3d(0.0, 0.0, 0.0), 
+      new Rotation3d(0.0, 0.0, Math.PI)
+    );
+
+    public static final double sizeX = 23.0;
+    public static final double sizeY = 23.0;
+
+    public static final double distanceToTag = 1.0;
+
+    public static enum Direction {
+      Center,
+      Left,
+      Right
+    };
   }
 
   public static class LightConstants {

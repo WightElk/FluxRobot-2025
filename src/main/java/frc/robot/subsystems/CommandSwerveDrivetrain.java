@@ -8,6 +8,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
+import com.ctre.phoenix6.swerve.SwerveModule.ModuleRequest;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -15,9 +16,11 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -32,6 +35,8 @@ import frc.robot.RobotConfig;
 import frc.robot.SwerveModuleConfig;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -236,6 +241,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
         return run(() -> this.setControl(requestSupplier.get()));
+    }
+
+    public void setChassisSpeeds(ChassisSpeeds speeds) {
+        SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(speeds);
+        // SwerveModuleState frontLeft = moduleStates[0];
+        // SwerveModuleState frontRight = moduleStates[1];
+        // SwerveModuleState backLeft = moduleStates[2];
+        // SwerveModuleState backRight = moduleStates[3];
+
+        // ModuleRequest frontLeftRequest = new ModuleRequest();
+        // frontLeftRequest.withState(moduleStates[0]);
+        // ModuleRequest frontLeftRequest = ModuleRequest.create()
+        //     .withSteerAngle(frontLeft.angle)
+        //     .withDriveVelocity(frontLeft.speed);
+
+        //TODO Compare with setControl(SwerveRequest request)
+        for (int i = 0; i < 4; ++i)
+            getModule(i).apply(new ModuleRequest().withState(moduleStates[i]));
     }
 
     /**

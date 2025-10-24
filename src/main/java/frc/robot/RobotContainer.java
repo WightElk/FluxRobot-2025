@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.*;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.commands.AlignedDriveToTag;
 import frc.robot.commands.Autos;
 import frc.robot.commands.DriveToTag;
 import frc.robot.generated.TunerConstants;
@@ -235,6 +236,10 @@ public class RobotContainer {
     // Vision control bindings (driver controller only)
     // Left bumper: Drive to AprilTag (vision-guided alignment)
     driverController.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new DriveToTag(vision, drivetrain));
+
+    driverController.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, VisionConstants.Direction.Left));
+    driverController.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, VisionConstants.Direction.Right));
+    driverController.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, VisionConstants.Direction.Right));
 
     // if (useTwoControllers)
     //   driverController.leftBumper().whileTrue(new DriveToTag(vision, drivetrain));
