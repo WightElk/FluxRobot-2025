@@ -4,7 +4,9 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 
@@ -21,6 +23,17 @@ public final class Constants {
   public static final class DriveConstants {
     public static final double AutoModeSpeed = -0.8;  // Move backward to driver station
     public static final double AutoModeDriveTime = 2.2;  // In seconds
+
+    public static final double Hoolo_X_kP = 0.5;
+    public static final double Hoolo_X_kI = 0.0;
+    public static final double Hoolo_X_kD = 0.0;
+    public static final double Hoolo_Y_kP = 0.5;
+    public static final double Hoolo_Y_kI = 0.0;
+    public static final double Hoolo_Y_kD = 0.0;
+    public static final double Hoolo_Rot_kP = 1.0;
+    public static final double Hoolo_Rot_kI = 0.0;
+    public static final double Hoolo_Rot_kD = 0.0;
+    public static final Pose2d Hoolo_Tolerance = new Pose2d(0.05, 0.05, new Rotation2d(Math.toRadians(10)));
   }
 
   public static final class ElevatorConstants {

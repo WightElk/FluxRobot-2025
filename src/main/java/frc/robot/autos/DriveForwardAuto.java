@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -57,7 +58,8 @@ public class DriveForwardAuto extends Command {
     // drive forward at 30% speed
     if(timer.get() < driveTime)
     {
-      drivetrain.setControl(drive.withVelocityX(DriveConstants.AutoModeSpeed)
+      double speed = drivetrain.allianceColor == Alliance.Red ? DriveConstants.AutoModeSpeed : -DriveConstants.AutoModeSpeed;
+      drivetrain.setControl(drive.withVelocityX(speed)
         .withVelocityY(0)
         .withRotationalRate(0));
     }

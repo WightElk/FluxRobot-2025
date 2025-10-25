@@ -24,6 +24,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -56,10 +57,12 @@ public class RobotContainer {
 
   public final SwerveDrivetrainConstants DrivetrainConstants;
 
-  /* Setting up bindings for necessary control of the swerve drive platform */
+  // Setting up bindings for necessary control of the swerve drive platform
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
     .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
-    .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+    .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
+    .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
@@ -195,25 +198,17 @@ public class RobotContainer {
         SmartDashboard.putNumber("Joystick_OutX", -sensitivityPos.transfer(driverController.getLeftY()));
         SmartDashboard.putNumber("Joystick_OutY", -sensitivityPos.transfer(driverController.getLeftX()));
         
-        SmartDashboard.putBoolean("isDisabled", DriverStation.isDisabled());
-        // if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-        //   DriverStation.getAlliance().ifPresent(color -> {
-        //     allianceColor = color;
-        //     m_hasAppliedOperatorPerspective = true;
-        //   });
-        // }
         //new InstantCommand(() -> drivetrain.resetOdometry(move11.getInitialPose()))
-        //OptionalInt DriverStation.getLocation()
-        double dir = drivetrain.allianceColor == Alliance.Red ? -1.0 : 1.0;
+        double maxSpeed = drivetrain.allianceColor == Alliance.Red ? -MaxSpeed : MaxSpeed;
 
         return drive.withVelocityX(
             // Drive forward with negative Y (forward)
-           -dir * MaxSpeed * sensitivityPos.transfer(driverController.getLeftY())
+            maxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
            //-MaxSpeed * driverController.getLeftY()
           )
           .withVelocityY(
             // Drive left with negative X (left)
-            -dir * MaxSpeed * sensitivityPos.transfer(driverController.getLeftX())
+            maxSpeed * sensitivityPos.transfer(-driverController.getLeftX())
             //-MaxSpeed * driverController.getLeftX()
           )
           .withRotationalRate(
