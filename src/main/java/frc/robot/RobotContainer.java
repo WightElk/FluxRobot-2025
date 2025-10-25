@@ -28,6 +28,9 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -37,6 +40,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -119,6 +124,10 @@ public class RobotContainer {
     //configureBindings();
   }
 
+  private boolean m_hasAppliedOperatorPerspective = false;
+  private Alliance allianceColor = Alliance.Blue;
+
+
   /**
    * Use this method to define your trigger->command mappings. Triggers can be created via the
    * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with an arbitrary
@@ -130,6 +139,14 @@ public class RobotContainer {
    */
   protected void configureBindings()
   {
+    System.out.println("configureBindings");
+    AprilTagFieldLayout layout = AprilTagFieldLayout.loadField(AprilTagFields.k2023ChargedUp);
+    Pose3d origin = layout.getOrigin();
+    double length = layout.getFieldLength();
+    double width = layout.getFieldWidth();
+
+    System.out.println("Origin: " + origin);
+    System.out.println("Size: " + width + "x" + length);
     /*  Example: How to bind commands to triggers
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
     new Trigger(exampleSubsystem::exampleCondition)
@@ -177,15 +194,26 @@ public class RobotContainer {
 
         SmartDashboard.putNumber("Joystick_OutX", -sensitivityPos.transfer(driverController.getLeftY()));
         SmartDashboard.putNumber("Joystick_OutY", -sensitivityPos.transfer(driverController.getLeftX()));
+        
+        SmartDashboard.putBoolean("isDisabled", DriverStation.isDisabled());
+        // if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+        //   DriverStation.getAlliance().ifPresent(color -> {
+        //     allianceColor = color;
+        //     m_hasAppliedOperatorPerspective = true;
+        //   });
+        // }
+        //new InstantCommand(() -> drivetrain.resetOdometry(move11.getInitialPose()))
+        //OptionalInt DriverStation.getLocation()
+        double dir = drivetrain.allianceColor == Alliance.Red ? -1.0 : 1.0;
 
         return drive.withVelocityX(
             // Drive forward with negative Y (forward)
-           -MaxSpeed * sensitivityPos.transfer(driverController.getLeftY())
+           -dir * MaxSpeed * sensitivityPos.transfer(driverController.getLeftY())
            //-MaxSpeed * driverController.getLeftY()
           )
           .withVelocityY(
             // Drive left with negative X (left)
-            -MaxSpeed * sensitivityPos.transfer(driverController.getLeftX())
+            -dir * MaxSpeed * sensitivityPos.transfer(driverController.getLeftX())
             //-MaxSpeed * driverController.getLeftX()
           )
           .withRotationalRate(

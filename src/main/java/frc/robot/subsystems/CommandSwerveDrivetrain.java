@@ -283,6 +283,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
+    public Alliance allianceColor = Alliance.Blue;
+
     @Override
     public void periodic() {
         /*
@@ -294,11 +296,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
          */
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent(allianceColor -> {
-                setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? kRedAlliancePerspectiveRotation
-                        : kBlueAlliancePerspectiveRotation
-                );
+                // setOperatorPerspectiveForward(
+                //     allianceColor == Alliance.Red
+                //         ? kRedAlliancePerspectiveRotation
+                //         : kBlueAlliancePerspectiveRotation
+                // );
+                this.allianceColor = allianceColor;
                 m_hasAppliedOperatorPerspective = true;
             });
         }
@@ -311,6 +314,25 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("Position_X", currentPose.getX());
         SmartDashboard.putNumber("Position_Y", currentPose.getY());
         SmartDashboard.putNumber("Rotation_Grad", currentPose.getRotation().getDegrees());
+
+        SmartDashboard.putBoolean("isDisabled_Drive", DriverStation.isDisabled());
+
+        SmartDashboard.putNumber("Acc_X",  gyro.getAccelerationX().getValueAsDouble());
+        SmartDashboard.putNumber("Acc_Y",  gyro.getAccelerationY().getValueAsDouble());
+        SmartDashboard.putNumber("Acc_Z",  gyro.getAccelerationZ().getValueAsDouble());
+        SmartDashboard.putNumber("Grav_X",  gyro.getGravityVectorX().getValueAsDouble());
+        SmartDashboard.putNumber("Grav_Y",  gyro.getGravityVectorY().getValueAsDouble());
+        SmartDashboard.putNumber("Grav_Z",  gyro.getGravityVectorZ().getValueAsDouble());
+        SmartDashboard.putNumber("Magn_X",  gyro.getMagneticFieldX().getValueAsDouble());
+        SmartDashboard.putNumber("Magn_Y",  gyro.getMagneticFieldY().getValueAsDouble());
+        SmartDashboard.putNumber("Magn_Z",  gyro.getMagneticFieldZ().getValueAsDouble());
+
+        SmartDashboard.putNumber("Yaw",  gyro.getYaw().getValueAsDouble());
+        SmartDashboard.putNumber("Roll",  gyro.getRoll().getValueAsDouble());
+        SmartDashboard.putNumber("Pitch",  gyro.getPitch().getValueAsDouble());
+        SmartDashboard.putNumber("Quat_X",  gyro.getQuatX().getValueAsDouble());
+        SmartDashboard.putNumber("Quat_Y",  gyro.getQuatY().getValueAsDouble());
+        SmartDashboard.putNumber("Quat_Z",  gyro.getQuatZ().getValueAsDouble());
     }
 
     private void startSimThread() {

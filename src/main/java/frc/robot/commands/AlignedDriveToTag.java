@@ -75,7 +75,7 @@ public class AlignedDriveToTag extends Command {
             new ProfiledPIDController(1, 0, 0,
             new TrapezoidProfile.Constraints(6.28, 3.14)));
 //        controller.setTolerance(Pose2d tolerance);
-
+/*
         switch (relativePosition) {
             case Left:
                 // Rotate field layout 90 degrees CCW
@@ -90,7 +90,7 @@ public class AlignedDriveToTag extends Command {
                 // No rotation needed
                 break;
         }
-
+*/
         if (vision != null)
             addRequirements(vision, drivetrain);
     }
@@ -127,11 +127,12 @@ public class AlignedDriveToTag extends Command {
         return Math.sqrt(CALIBRATION_CONSTANT / area);
     }
 
+    AprilTagFieldLayout layout = AprilTagFieldLayout.loadField(AprilTagFields.k2023ChargedUp);
+    Pose3d origin = layout.getOrigin();
+    double length = layout.getFieldLength();
+    double width = layout.getFieldWidth();
+
     void f() {
-        AprilTagFieldLayout layout = AprilTagFieldLayout.loadField(AprilTagFields.k2023ChargedUp);
-        Pose3d origin = layout.getOrigin();
-        double length = layout.getFieldLength();
-        double width = layout.getFieldWidth();
 
         int tagId = 0;
         Optional<Pose3d> pos = layout.getTagPose(tagId);
@@ -171,9 +172,9 @@ public class AlignedDriveToTag extends Command {
         yawTag += Math.toRadians(90);
         //yawTag = clamp(yawTag, Math.toRadians(-180), Math.toRadians(180));
 
-        Translation3d targetPos = calculatePositionAtTarget(tagId);
-        Rotation3d targetRot = calculateRotationAtTarget(tagId);
-        Pose3d targetPose = calculatePoseAtTarget(tagId);
+        // Translation3d targetPos = calculatePositionAtTarget(tagId);
+        // Rotation3d targetRot = calculateRotationAtTarget(tagId);
+        // Pose3d targetPose = calculatePoseAtTarget(tagId);
 
         double yawError = vision.getTargetYaw();
         double currentArea = vision.getTargetArea();
@@ -239,7 +240,7 @@ public class AlignedDriveToTag extends Command {
             .withRotationalRate(rotationSpeed)
         );
 
-
+/*
         // Sample the trajectory at 3.4 seconds from the beginning.
         Trajectory.State goal = trajectory.sample(3.4);
         // Get the adjusted speeds. Here, we want the robot to be facing
@@ -248,8 +249,8 @@ public class AlignedDriveToTag extends Command {
         //angle = Rotation2d.fromDegrees(70.0);
 
         ChassisSpeeds adjustedSpeeds = controller.calculate(currentRobotPose, goal, angle);
-
         drivetrain.setChassisSpeeds(adjustedSpeeds);
+*/
     }
 
     @Override
