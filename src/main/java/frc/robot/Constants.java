@@ -114,13 +114,13 @@ public final class Constants {
 
     public static final double TriggerThreshold = 0.2;
 
-    public static final double xStartPos = 0.04;
+    public static final double xStartPos = 0.09;
     public static final double xMiddlePos = 0.6;
     public static final double yStartPos = 0.1;
     public static final double yMiddlePos = 0.3;
     public static final double yMaxPos = 0.8; 
 
-    public static final double xStartRot = 0.04;
+    public static final double xStartRot = 0.09;
     public static final double xMiddleRot = 0.6;
     public static final double yStartRot = 0.1;
     public static final double yMiddleRot = 0.5;

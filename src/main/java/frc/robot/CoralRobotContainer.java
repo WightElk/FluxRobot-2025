@@ -38,8 +38,9 @@ public class CoralRobotContainer extends RobotContainer {
   private final CommandXboxController operatorController =
     new CommandXboxController(OperatorConstants.OperatorControllerPort);
 
-//  public final DrivePathAuto autoDriveCommand = new DrivePathAuto(drivetrain);
-  public final DriveToPoseCommand autoDriveCommand;
+    public final DriveForwardAuto autoDriveForward = new DriveForwardAuto(drivetrain);
+    //  public final DrivePathAuto autoDriveCommand = new DrivePathAuto(drivetrain);
+    //public final DriveToPoseCommand autoDriveCommand;
 
   public CoralRobotContainer() {
     super(RobotConfig.CoralRobot, true);
@@ -47,7 +48,7 @@ public class CoralRobotContainer extends RobotContainer {
     Supplier<Pose2d> goalPoseSupplier = () -> new Pose2d(Units.feetToMeters(5), Units.feetToMeters(3), Rotation2d.fromDegrees(90));
     Supplier<Pose2d> poseProvider = drivetrain::getPose;
 
-    autoDriveCommand = new DriveToPoseCommand(drivetrain, goalPoseSupplier, poseProvider, true);
+    //autoDriveCommand = new DriveToPoseCommand(drivetrain, goalPoseSupplier, poseProvider, true);
   
     configureBindings();
   }
@@ -78,6 +79,7 @@ public class CoralRobotContainer extends RobotContainer {
 
   public Command getAutonomousCommand() {
     // The selected command will be run in autonomous
-    return autoDriveCommand.andThen((new RunCommand(() -> elevator.moveToLevel1(), elevator)).withTimeout(2.0)).andThen(new RawTrayCommand(tray, () -> -TrayConstants.Speed));
+    return autoDriveForward;
+//    return autoDriveCommand.andThen((new RunCommand(() -> elevator.moveToLevel1(), elevator)).withTimeout(2.0)).andThen(new RawTrayCommand(tray, () -> -TrayConstants.Speed));
   }
 }
