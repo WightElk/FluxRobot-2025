@@ -128,17 +128,17 @@ public class RobotContainer {
     // /edu/wpi/first/apriltag/2025-reefscape-andymark.json
     //String path = Filesystem.getDeployDirectory().getPath() + AprilTagFields.k2025ReefscapeAndyMark.m_resourceFile;
     String path = Filesystem.getDeployDirectory().getPath() + "/" +  Constants.fieldLayoutFile;
-    if (false) {
-    try {
-        fieldLayout = new AprilTagFieldLayout(path);
-        fieldLength = fieldLayout.getFieldLength();
-        fieldWidth = fieldLayout.getFieldWidth();
-        fieldOrigin = fieldLayout.getOrigin();
-    } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+    if (useVision) {
+      try {
+          fieldLayout = new AprilTagFieldLayout(path);
+          fieldLength = fieldLayout.getFieldLength();
+          fieldWidth = fieldLayout.getFieldWidth();
+          fieldOrigin = fieldLayout.getOrigin();
+      } catch (IOException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+      }
     }
-  }
 
     // Single camera vision for AprilTag detection
     vision = useVision ? new VisionSubsystem(VisionConstants.CAMERA_NAME, VisionConstants.CameraBackName, fieldLayout, drivetrain::addVisionMeasurement) : null;
@@ -227,25 +227,20 @@ public class RobotContainer {
         
         //new InstantCommand(() -> drivetrain.resetOdometry(move11.getInitialPose()))
         double maxSpeed = drivetrain.allianceColor == Alliance.Red ? -MaxSpeed : MaxSpeed;
-
-        return drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-              .withVelocityY(-driverController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-              .withRotationalRate(-driverController.getRightX() * MaxAngularRate); // Drive counterclockwise with negative X (left)
-
         
-        // return drive.withVelocityX(
-        //     // Drive forward with negative Y (forward)
-        //     maxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
-        //    //-MaxSpeed * driverController.getLeftY()
-        //   )
-        //   .withVelocityY(
-        //     // Drive left with negative X (left)
-        //     maxSpeed * sensitivityPos.transfer(-driverController.getLeftX())
-        //     //-MaxSpeed * driverController.getLeftX()
-        //   )
-        //   .withRotationalRate(
-        //     MaxAngularRate * sensitivityRot.transfer(-driverController.getRightX())
-        //   );
+        return drive.withVelocityX(
+            // Drive forward with negative Y (forward)
+            maxSpeed * sensitivityPos.transfer(-driverController.getLeftY())
+           //-MaxSpeed * driverController.getLeftY()
+          )
+          .withVelocityY(
+            // Drive left with negative X (left)
+            maxSpeed * sensitivityPos.transfer(-driverController.getLeftX())
+            //-MaxSpeed * driverController.getLeftX()
+          )
+          .withRotationalRate(
+            MaxAngularRate * sensitivityRot.transfer(-driverController.getRightX())
+          );
         }
       )
     );
