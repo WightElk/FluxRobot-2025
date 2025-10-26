@@ -7,6 +7,9 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 //import static frc.robot.generated.TunerConstants.ConstantCreator;
 
+import java.io.IOException;
+import java.util.function.Supplier;
+
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AlignedDriveToTag;
@@ -31,11 +34,13 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -43,6 +48,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -69,6 +75,11 @@ public class RobotContainer {
   public final CommandSwerveDrivetrain drivetrain;
 
   private final VisionSubsystem vision;
+
+  public AprilTagFieldLayout fieldLayout;
+  public Pose3d fieldOrigin = new Pose3d();
+  public double fieldLength = 0.0;
+  public double fieldWidth = 0.0;
 
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
@@ -114,8 +125,21 @@ public class RobotContainer {
     drivetrain = createDrivetrain(config);
     drivetrain.registerTelemetry(logger::telemeterize);
 
+    // /edu/wpi/first/apriltag/2025-reefscape-andymark.json
+    //String path = Filesystem.getDeployDirectory().getPath() + AprilTagFields.k2025ReefscapeAndyMark.m_resourceFile;
+    String path = Filesystem.getDeployDirectory().getPath() + "/" +  Constants.fieldLayoutFile;
+    try {
+        fieldLayout = new AprilTagFieldLayout(path);
+        fieldLength = fieldLayout.getFieldLength();
+        fieldWidth = fieldLayout.getFieldWidth();
+        fieldOrigin = fieldLayout.getOrigin();
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+
     // Single camera vision for AprilTag detection
-    vision = useVision ? new VisionSubsystem(VisionConstants.CAMERA_NAME) : null;
+    vision = useVision ? new VisionSubsystem(VisionConstants.CAMERA_NAME, VisionConstants.CameraBackName, fieldLayout, drivetrain::addVisionMeasurement) : null;
 
     SmartDashboard.putNumber("Start_X", xStartPos);
     SmartDashboard.putNumber("Middle_X", xMiddlePos);
@@ -142,14 +166,15 @@ public class RobotContainer {
    */
   protected void configureBindings()
   {
-    System.out.println("configureBindings");
-    AprilTagFieldLayout layout = AprilTagFieldLayout.loadField(AprilTagFields.k2023ChargedUp);
-    Pose3d origin = layout.getOrigin();
-    double length = layout.getFieldLength();
-    double width = layout.getFieldWidth();
+    // System.out.println("configureBindings");
+    // AprilTagFieldLayout layout = AprilTagFieldLayout.loadField(AprilTagFields.k2023ChargedUp);
+    // Pose3d origin = layout.getOrigin();
+    // double length = layout.getFieldLength();
+    // double width = layout.getFieldWidth();
 
-    System.out.println("Origin: " + origin);
-    System.out.println("Size: " + width + "x" + length);
+    // System.out.println("Origin: " + origin);
+    // System.out.println("Size: " + width + "x" + length);
+
     /*  Example: How to bind commands to triggers
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
     new Trigger(exampleSubsystem::exampleCondition)
@@ -260,9 +285,12 @@ public class RobotContainer {
     // Left bumper: Drive to AprilTag (vision-guided alignment)
     driverController.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new DriveToTag(vision, drivetrain));
 
-    driverController.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, VisionConstants.Direction.Left));
-    driverController.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, VisionConstants.Direction.Right));
-    driverController.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, VisionConstants.Direction.Right));
+    Supplier<Pose2d> goalPoseSupplier = () -> new Pose2d(Units.feetToMeters(5), Units.feetToMeters(3), Rotation2d.fromDegrees(90));
+    Supplier<Pose2d> poseProvider = drivetrain::getPose;
+
+    driverController.leftTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, fieldLayout, VisionConstants.Direction.Left,goalPoseSupplier, poseProvider));
+    driverController.rightTrigger(OperatorConstants.TriggerThreshold).whileTrue(new AlignedDriveToTag(vision, drivetrain, fieldLayout, VisionConstants.Direction.Right, goalPoseSupplier, poseProvider));
+//    driverController.y().whileTrue(new AlignedDriveToTag(vision, drivetrain, fieldLayout, VisionConstants.Direction.Center, goalPoseSupplier, poseProvider));
 
     // if (useTwoControllers)
     //   driverController.leftBumper().whileTrue(new DriveToTag(vision, drivetrain));
@@ -309,4 +337,13 @@ public class RobotContainer {
   public VisionSubsystem getVision() {
     return vision;
   }
+
+    public void resetPose() {
+        // Example Only - startPose should be derived from some assumption
+        // of where your robot was placed on the field.
+        // The first pose in an autonomous path is often a good choice.
+        var startPose = new Pose2d(1, 1, new Rotation2d());
+        // drivetrain.resetPose(startPose, true);
+        // vision.resetSimPose(startPose);
+    }
 }

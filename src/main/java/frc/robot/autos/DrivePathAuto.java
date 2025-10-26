@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 
@@ -36,15 +37,16 @@ public class DrivePathAuto extends Command {
     .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
     .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
 
-    private HolonomicDriveController controller;
+    private HolonomicDriveController driveController;
     private Trajectory trajectory;
-    Pose2d startPose;
-    Pose2d endPose;
-    private Pose2d currentPose;
+    private Pose2d startPose = new Pose2d(0.0, 0.0, Rotation2d.fromDegrees(0.0));
+    private Pose2d endPose;
+    private Pose2d currentPose = new Pose2d(0.0, 0.0, Rotation2d.fromDegrees(0.0));
+    private Pose2d targetTolerance = Constants.DriveConstants.Target_Tolerance;
 
     private Timer timer = new Timer();
     private double prevTime = 0.0;
-    private double driveTime = DriveConstants.AutoModeDriveTime;//3.25;
+    private double driveTime = DriveConstants.AutoModeDriveTime_Max;//3.25;
 
     /**
      * This auto will have the robot drive forwards
@@ -62,39 +64,43 @@ public class DrivePathAuto extends Command {
     public DrivePathAuto(CommandSwerveDrivetrain drivetrain)
     {
         this.drivetrain = drivetrain;
+        endPose = startPose;
 
-        controller = new HolonomicDriveController(
-            new PIDController(DriveConstants.Hoolo_X_kP, DriveConstants.Hoolo_X_kI, DriveConstants.Hoolo_X_kD),
-            new PIDController(DriveConstants.Hoolo_Y_kP, DriveConstants.Hoolo_Y_kI, DriveConstants.Hoolo_Y_kD),
-            new ProfiledPIDController(DriveConstants.Hoolo_Rot_kP, DriveConstants.Hoolo_Rot_kI, DriveConstants.Hoolo_Rot_kD,
+        driveController = new HolonomicDriveController(
+            new PIDController(DriveConstants.Holo_X_kP, DriveConstants.Holo_X_kI, DriveConstants.Holo_X_kD),
+            new PIDController(DriveConstants.Holo_Y_kP, DriveConstants.Holo_Y_kI, DriveConstants.Holo_Y_kD),
+            new ProfiledPIDController(DriveConstants.Holo_Rot_kP, DriveConstants.Holo_Rot_kI, DriveConstants.Holo_Rot_kD,
                 new TrapezoidProfile.Constraints(6.28, 3.14)));
-        controller.setTolerance(DriveConstants.Hoolo_Tolerance);
+        driveController.setTolerance(DriveConstants.Path_Tolerance);
 
         addRequirements(drivetrain);
     }
 
     public void generateTrajectory() {
-        startPose = new Pose2d(Units.feetToMeters(1.54), Units.feetToMeters(23.23),
-            Rotation2d.fromDegrees(-180));
-        endPose = new Pose2d(Units.feetToMeters(23.7), Units.feetToMeters(6.8),
-            Rotation2d.fromDegrees(-160));
+        // startPose = new Pose2d(Units.feetToMeters(0), Units.feetToMeters(0),
+        //     Rotation2d.fromDegrees(0));
+        endPose = new Pose2d(Units.feetToMeters(5), Units.feetToMeters(3),
+            Rotation2d.fromDegrees(45));
 
         ArrayList<Translation2d> interiorWaypoints = new ArrayList<Translation2d>();
-        interiorWaypoints.add(new Translation2d(Units.feetToMeters(14.54), Units.feetToMeters(23.23)));
+//        interiorWaypoints.add(new Translation2d(Units.feetToMeters(14.54), Units.feetToMeters(23.23)));
 //        interiorWaypoints.add(new Translation2d(Units.feetToMeters(21.04), Units.feetToMeters(18.23)));
 
-        TrajectoryConfig config = new TrajectoryConfig(Units.feetToMeters(12), Units.feetToMeters(12));
+        TrajectoryConfig config = new TrajectoryConfig(Units.feetToMeters(10), Units.feetToMeters(10));
         config.setKinematics(drivetrain.getKinematics());
         config.setStartVelocity(0.0);
         config.setEndVelocity(0.0);
 //        config.setReversed(true);
 
         trajectory = TrajectoryGenerator.generateTrajectory(startPose, interiorWaypoints, endPose, config);
+        System.out.println("=== generateTrajectory: " + endPose.getRotation().getDegrees() + " Duration: " + trajectory.getTotalTimeSeconds());
     }
 
     @Override
   public void initialize() {
-    System.out.println("Auto-initialize");
+    drivetrain.resetOdometry(startPose);
+    generateTrajectory();
+
     prevTime = 0.0;
     // start timer, uses restart to clear the timer as well in case this command has
     // already been run before
@@ -104,9 +110,10 @@ public class DrivePathAuto extends Command {
   // Runs every cycle while the command is scheduled (~50 times per second), here we will just drive forwards
   @Override
   public void execute() {
+//    System.out.println("Auto-execute");
     // drive forward at 30% speed
     double time = timer.get();
-    if(time < driveTime)
+    if(time < driveTime && trajectory != null)
     {
         double delta = time - prevTime;
 
@@ -120,7 +127,15 @@ public class DrivePathAuto extends Command {
         //Rotation2d rot = Rotation2d.fromDegrees(70.0);
         Rotation2d rot = goal.poseMeters.getRotation();
 
-        ChassisSpeeds adjustedSpeeds = controller.calculate(currentPose, goal, rot);
+        currentPose = drivetrain.getPosition();
+
+        double duration = trajectory.getTotalTimeSeconds();
+//        rot = currentPose.getRotation().interpolate(endPose.getRotation(), delta / duration);
+        Rotation2d rot1 = startPose.getRotation().interpolate(endPose.getRotation(), time / duration);
+
+        System.out.println("=== Estimator: " + currentPose.getTranslation().toString() + " Odometry: " + goal.poseMeters.toString() + " ROT:" + rot.toString() + " ROT1:" + rot1.toString());
+
+        ChassisSpeeds adjustedSpeeds = driveController.calculate(currentPose, goal, rot);
         drivetrain.setChassisSpeeds(adjustedSpeeds);
 
     //   drivetrain.setControl(drive.withVelocityX(speed)
@@ -141,11 +156,25 @@ public class DrivePathAuto extends Command {
     timer.stop();
   }
 
+  public boolean atTarget() {
+//    System.out.println("===Auto-atTarget " + driveController.atReference());
+    Pose2d posError = endPose.relativeTo(currentPose);
+    Rotation2d rotError = endPose.getRotation().minus(currentPose.getRotation());
+    final Translation2d tranError = posError.getTranslation();
+    final Translation2d posTolerance = targetTolerance.getTranslation();
+    final Rotation2d rotTolerance = targetTolerance.getRotation();
+
+    return Math.abs(tranError.getX()) < posTolerance.getX()
+        && Math.abs(tranError.getY()) < posTolerance.getY()
+        && Math.abs(rotError.getRadians()) < rotTolerance.getRadians();
+  }
+
   // Runs every cycle while the command is scheduled to check if the command is finished
   @Override
   public boolean isFinished() {
+    System.out.println("===Auto-isFinished " + driveController.atReference() + " / " + atTarget());
     // check if timer exceeds driving time in seconds, when it has this will return true indicating
     // this command is finished
-    return controller.atReference() || timer.get() >= driveTime;
+    return atTarget() || timer.get() >= driveTime;
   }
 }

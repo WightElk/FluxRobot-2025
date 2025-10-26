@@ -8,11 +8,13 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
+import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModule.ModuleRequest;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -27,10 +29,12 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants;
 import frc.robot.RobotConfig;
 import frc.robot.SwerveModuleConfig;
 import frc.robot.generated.TunerConstants;
@@ -50,8 +54,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     protected Pigeon2 gyro;
     protected SwerveDriveKinematics kinematics;
     protected SwerveDriveOdometry odometry;
+    protected SwerveDrivePoseEstimator poseEstimator;
     protected Pose2d initPose = new Pose2d();
     protected Pose2d currentPose;
+    protected Timer timer = new Timer();
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -145,6 +151,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         super(drivetrainConstants, modules);
 
         gyro = new Pigeon2(config.pigeonId, config.driveCANBus);
+        gyro.reset();
+
         initOdometry(
             new Translation2d(config.frontLeft.xPos, config.frontLeft.yPos),
             new Translation2d(config.frontRight.xPos, config.frontRight.yPos),
@@ -284,9 +292,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public Alliance allianceColor = Alliance.Blue;
+    static int count = 0;
 
     @Override
     public void periodic() {
+        // if (count++ < 5)
+        //     System.out.println("===periodic " + (count - 1));
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -310,6 +321,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Rotation2d rotation = gyro.getRotation2d();
         // Update the pose
         currentPose = odometry.update(rotation, getState().ModulePositions);
+
+        Pose2d pose = poseEstimator.updateWithTime(Timer.getFPGATimestamp(), rotation, getState().ModulePositions);
 
         SmartDashboard.putNumber("Position_X", currentPose.getX());
         SmartDashboard.putNumber("Position_Y", currentPose.getY());
@@ -391,13 +404,63 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         odometry = new SwerveDriveOdometry(kinematics, gyro.getRotation2d(),
             driveState.ModulePositions, initPose);
+    
+        poseEstimator = new SwerveDrivePoseEstimator(kinematics, gyro.getRotation2d(),
+            driveState.ModulePositions, initPose);
+    }
+
+    /** Get the estimated pose of the swerve drive on the field. */
+    public Pose2d getPose() {
+        return poseEstimator.getEstimatedPosition();
+    }
+
+    /** The heading of the swerve drive's estimated pose on the field. */
+    public Rotation2d getHeading() {
+        return getPose().getRotation();
+    }
+
+    /** Raw gyro yaw (this may not match the field heading!). */
+    public Rotation2d getGyroYaw() {
+        return gyro.getRotation2d();
+    }
+
+    /** Get the chassis speeds of the robot (vx, vy, omega) from the swerve module states. */
+    public ChassisSpeeds getChassisSpeeds() {
+        return kinematics.toChassisSpeeds(getState().ModuleStates);
     }
 
     public Pose2d getPosition() {
         return currentPose;  //odometry.getPoseMeters();
     }
 
+    public Rotation2d getRotation() {
+        return gyro.getRotation2d();  //odometry.getPoseMeters();
+    }
+
     public void resetOdometry(Pose2d pose) {
+//        gyro.reset();
         odometry.resetPosition(gyro.getRotation2d(), getState().ModulePositions, pose);
     }
+
+    public Rotation2d getYaw() {
+//        return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - gyro.getYaw()) : Rotation2d.fromDegrees(gyro.getYaw());
+        return Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
+    }
+/*
+    public void drive(ChassisSpeeds targetSpeeds) {
+        SwerveModuleState[] swerveModuleStates =
+            kinematics.toSwerveModuleStates(targetSpeeds);
+        SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.DriveConstants.maxSpeed);
+
+        SwerveModuleState[] moduleStates = getState().ModuleStates;
+        for(int i = 0; i < moduleStates.length; ++i){
+            SwerveModuleState mod = moduleStates[i];
+            desiredState = CTREModuleState.optimize(desiredState, getState().angle); 
+            mod.setAngle(desiredState);
+            mod.setSpeed(desiredState, true);
+    
+//            mod.setDesiredState(swerveModuleStates[mod.moduleNumber], true);
+        }
+    }
+*/
 }

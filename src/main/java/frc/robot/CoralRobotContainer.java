@@ -1,7 +1,12 @@
 package frc.robot;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.CANBus;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -9,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.TrayConstants;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.TraySubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -17,6 +23,8 @@ import frc.robot.commands.DriveToTag;
 import frc.robot.commands.TrayInOutCommand;
 import frc.robot.commands.RawTrayCommand;
 import frc.robot.autos.DriveForwardAuto;
+import frc.robot.autos.DrivePathAuto;
+import frc.robot.autos.DriveToPoseCommand;
 
 /**
  * Robot with Coral Elevator
@@ -30,11 +38,17 @@ public class CoralRobotContainer extends RobotContainer {
   private final CommandXboxController operatorController =
     new CommandXboxController(OperatorConstants.OperatorControllerPort);
 
-  public final DriveForwardAuto autoDriveForward = new DriveForwardAuto(drivetrain);
+//  public final DrivePathAuto autoDriveCommand = new DrivePathAuto(drivetrain);
+  public final DriveToPoseCommand autoDriveCommand;
 
   public CoralRobotContainer() {
     super(RobotConfig.CoralRobot, true);
 
+    Supplier<Pose2d> goalPoseSupplier = () -> new Pose2d(Units.feetToMeters(5), Units.feetToMeters(3), Rotation2d.fromDegrees(90));
+    Supplier<Pose2d> poseProvider = drivetrain::getPose;
+
+    autoDriveCommand = new DriveToPoseCommand(drivetrain, goalPoseSupplier, poseProvider, true);
+  
     configureBindings();
   }
 
@@ -64,6 +78,6 @@ public class CoralRobotContainer extends RobotContainer {
 
   public Command getAutonomousCommand() {
     // The selected command will be run in autonomous
-    return autoDriveForward;
+    return autoDriveCommand.andThen((new RunCommand(() -> elevator.moveToLevel1(), elevator)).withTimeout(2.0)).andThen(new RawTrayCommand(tray, () -> -TrayConstants.Speed));
   }
 }

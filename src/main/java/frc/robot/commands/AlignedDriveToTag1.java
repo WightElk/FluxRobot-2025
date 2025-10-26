@@ -1,12 +1,9 @@
 package frc.robot.commands;
 
-import static edu.wpi.first.units.Units.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -21,14 +18,12 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,7 +31,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.VisionConstants.Direction;
-import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.VisionSubsystem;
 
@@ -47,7 +41,7 @@ import frc.robot.subsystems.VisionSubsystem;
  * Distance calibration: Approximate relationship between distance and target area percentage.
  * Based on typical AprilTag size (6-8 inches) and camera FOV.
  */
-public class AlignedDriveToTag extends Command {
+public class AlignedDriveToTag1 extends Command {
     private final VisionSubsystem vision;
     private final CommandSwerveDrivetrain drivetrain;
 
@@ -57,9 +51,6 @@ public class AlignedDriveToTag extends Command {
 
     private final SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-    // private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-    //     .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
-    //     .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
 
     // Cached command to avoid lambda creation every execute cycle
     private Command cachedDriveCommand;
@@ -73,59 +64,19 @@ public class AlignedDriveToTag extends Command {
     private double distanceToTarget = 0;
     private double targetAngle = 0.0;
     private double targetDistance = 0.0;
-    Pose3d targetPose;
 
-
-        /** Creates a new DriveToPoseCommand. */
-    private static final double TRANSLATION_TOLERANCE = 0.02;
-    private static final double THETA_TOLERANCE = Math.PI * 2.0 / 180.0;
-  
-    private static final TrapezoidProfile.Constraints DEFAULT_XY_CONSTRAINTS = new TrapezoidProfile.Constraints(
-      Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared,
-      Constants.AutoConstants.kMaxSpeedMetersPerSecond
-    );
-    private static final TrapezoidProfile.Constraints DEFAULT_OMEGA_CONSTRAINTS = new TrapezoidProfile.Constraints(
-      Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared,
-      Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond
-    );
-  
-    private final ProfiledPIDController xController;
-    private final ProfiledPIDController yController;
-    private final ProfiledPIDController thetaController;
-  
-    private final Supplier<Pose2d> poseProvider;
-    private final Supplier<Pose2d> goalPoseSupplier;
-    private final boolean useAllianceColor;
-  
-      private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-      private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
     /**
      * Creates a new DriveToTag command.
      * @param vision VisionSubsystem for target detection
      * @param drivetrain CommandSwerveDrivetrain for robot movement
      */
-    public AlignedDriveToTag(VisionSubsystem vision, CommandSwerveDrivetrain drivetrain,
-        AprilTagFieldLayout fieldLayout, VisionConstants.Direction relativePosition,
-        Supplier<Pose2d> goalPoseSupplier, Supplier<Pose2d> poseProvider) {
+    public AlignedDriveToTag1(VisionSubsystem vision, CommandSwerveDrivetrain drivetrain,
+        AprilTagFieldLayout fieldLayout, VisionConstants.Direction relativePosition) {
         this.vision = vision;
         this.drivetrain = drivetrain;
         this.fieldLayout = fieldLayout;
         this.relativePosition = relativePosition;
-
-        this.goalPoseSupplier = goalPoseSupplier;
-        this.poseProvider = poseProvider;
-        this.useAllianceColor = true;
-    
-        xController = new ProfiledPIDController(Constants.AutoConstants.kPXController, 0, 0, DEFAULT_XY_CONSTRAINTS);
-        yController = new ProfiledPIDController(Constants.AutoConstants.kPYController, 0, 0, DEFAULT_XY_CONSTRAINTS);
-        thetaController = new ProfiledPIDController(Constants.AutoConstants.kPThetaController, 0, 0, DEFAULT_OMEGA_CONSTRAINTS);
-    
-        xController.setTolerance(TRANSLATION_TOLERANCE);
-        yController.setTolerance(TRANSLATION_TOLERANCE);
-        thetaController.setTolerance(THETA_TOLERANCE);
-    
-        thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
         length = fieldLayout.getFieldLength();
         width = fieldLayout.getFieldWidth();
@@ -161,45 +112,12 @@ public class AlignedDriveToTag extends Command {
     public void initialize() {
         cachedDriveCommand = null; // Reset cached command on initialization
 
-              resetPIDControllers();
-      Pose2d pose = goalPoseSupplier.get();
-
-      if (useAllianceColor && drivetrain.allianceColor == DriverStation.Alliance.Red) {
-        Translation2d transformedTranslation = new Translation2d(pose.getX(), 8.0137 - pose.getY());
-        Rotation2d transformedHeading = pose.getRotation().times(-1);
-        pose = new Pose2d(transformedTranslation, transformedHeading);
-      }
-
-      pose = new Pose2d(inchesToMeters(46.0), inchesToMeters(6.75), Rotation2d.kZero);
-
-      thetaController.setGoal(pose.getRotation().getRadians());
-      xController.setGoal(pose.getX());
-      yController.setGoal(pose.getY());
-
-      double x0 = 0.0254 * (48.0 - 36.0) * Math.cos(targetAngle);
-      double y0 = 0.0254 * (48.0 - 36.0) * Math.sin(targetAngle);
-        thetaController.setGoal(0);
-      xController.setGoal(x0);
-      yController.setGoal(y0);
-
         // Initialize SmartDashboard values if not already set
         if (!SmartDashboard.containsKey("TargetDistance_Inches")) {
             SmartDashboard.putNumber("TargetDistance_Inches", VisionConstants.TargetDistance); // Default 30 inches
         }
     }
     
-    public boolean atGoal() {
-        return xController.atGoal() && yController.atGoal() && thetaController.atGoal();
-      }
-    
-      private void resetPIDControllers() {
-        Pose2d robotPose = poseProvider.get();
-        thetaController.reset(robotPose.getRotation().getRadians());
-        xController.reset(robotPose.getX());
-        yController.reset(robotPose.getY());
-      }
-
-      
     Pose3d calculatePoseAtTarget(int tagId) {
         Optional<Pose3d> tagPose = fieldLayout.getTagPose(tagId);
         if (tagPose.isEmpty())
@@ -250,10 +168,6 @@ public class AlignedDriveToTag extends Command {
         return Math.sqrt(CALIBRATION_CONSTANT / area);
     }
 
-    double inchesToMeters(double x) {
-        return x * 0.0254;
-    }
-
     @Override
     public void execute() {
         if (vision == null)
@@ -290,9 +204,9 @@ public class AlignedDriveToTag extends Command {
 
         // Translation3d targetPos = calculatePositionAtTarget(tagId);
         // Rotation3d targetRot = calculateRotationAtTarget(tagId);
-        targetPose = calculatePoseAtTarget(tagId);
+        Pose3d targetPose = calculatePoseAtTarget(tagId);
 
-        double yawError = Math.toRadians(vision.getTargetYaw()) - targetAngle;
+        double yawError = vision.getTargetYaw() - targetAngle;
         double currentArea = vision.getTargetArea();
 
         SmartDashboard.putNumber("TargetDistance_Inches", targetDistance);
@@ -341,11 +255,11 @@ public class AlignedDriveToTag extends Command {
         // Apply movement (forward X, no strafe Y, rotation)
         // Cache command to avoid creating new lambda every cycle
         if (cachedDriveCommand == null) {
-            // cachedDriveCommand = drivetrain.applyRequest(() -> driveRequest
-            //     .withVelocityX(driveSpeed)
-            //     .withVelocityY(0)
-            //     .withRotationalRate(rotationSpeed)
-            // );
+            cachedDriveCommand = drivetrain.applyRequest(() -> driveRequest
+                .withVelocityX(driveSpeed)
+                .withVelocityY(0)
+                .withRotationalRate(rotationSpeed)
+            );
         }
 
 //        SmartDashboard.putNumber("distanceToTarget", distanceToTarget);
@@ -353,39 +267,13 @@ public class AlignedDriveToTag extends Command {
         SmartDashboard.putNumber("rotationSpeed", rotationSpeed);
 
         // Update the request with new values and execute
-        // drivetrain.setControl(driveRequest
-        //     .withVelocityX(driveSpeed)
-        //     .withVelocityY(0)
-        //     .withRotationalRate(rotationSpeed)
-        // );
+        drivetrain.setControl(driveRequest
+            .withVelocityX(driveSpeed)
+            .withVelocityY(0)
+            .withRotationalRate(rotationSpeed)
+        );
 //        ChassisSpeeds.fromFieldRelativeSpeeds
         Pose2d currentPose = drivetrain.getPosition();
-
-        Pose2d robotPose = poseProvider.get();
-
-        double yaw = Math.toRadians(vision.getTargetYaw());
-        double x = 0.0254 * (currentDistanceInches - 36.0) * Math.cos(yaw);
-        double y = 0.0254 * (currentDistanceInches - 36.0) * Math.sin(yaw);
-  
-        double xSpeed = xController.calculate(x);
-        if (xController.atGoal()) {
-          xSpeed = 0;
-        }
-    
-        double ySpeed = yController.calculate(y);
-        if (yController.atGoal()) {
-          ySpeed = 0;
-        }
-    
-        double omegaSpeed = thetaController.calculate(robotPose.getRotation().getRadians());
-        if (thetaController.atGoal()) {
-          omegaSpeed = 0;
-        }
-    
-        System.out.println("=== Pose:" + drivetrain.getPose().toString() + " Position: " + drivetrain.getPosition().toString());
-  
-        drivetrain.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omegaSpeed, robotPose.getRotation()));
-
 /*
         // Sample the trajectory at 3.4 seconds from the beginning.
         Trajectory.State goal = trajectory.sample(3.4);
@@ -425,7 +313,6 @@ public class AlignedDriveToTag extends Command {
         double yawError = Math.abs(vision.getTargetYaw());
         double areaError = Math.abs(targetArea - vision.getTargetArea());
 
-        //TODO atGoal()
         return yawError < VisionConstants.ANGLE_TOLERANCE && areaError < VisionConstants.AREA_TOLERANCE;
     }
 }
