@@ -254,6 +254,34 @@ public class AlignedDriveToTag extends Command {
         return x * 0.0254;
     }
 
+    int targetId = -1;
+
+    void init() {
+        if (!vision.hasTargets()) {
+            targetId = -1;
+            return;
+        }
+
+        // Get target information
+        targetId = vision.getTargetID();
+        if (targetId == -1 || fieldLayout == null)
+            return;
+
+        Pose3d tagPose = fieldLayout.getTagPose(targetId).orElse(null);
+        if (tagPose == null)
+            return;
+
+        Translation3d tran = tagPose.getTranslation();
+        Rotation3d rot = tagPose.getRotation();
+        double yawTag = rot.getZ();
+        // Have Destination Pose: x, y angle
+    }
+/*
+Initialize
+
+delta x, y, yaw
+
+*/
     @Override
     public void execute() {
         if (vision == null)
